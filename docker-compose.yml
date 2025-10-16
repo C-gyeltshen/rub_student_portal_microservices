@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # User Services
   user_services:
