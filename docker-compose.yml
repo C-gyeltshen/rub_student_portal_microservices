@@ -15,6 +15,21 @@ services:
       - rub-network
     restart: unless-stopped
 
+  # Banking Services
+  banking_services:
+    build:
+      context: ./services/banking_services
+      dockerfile: Dockerfile
+    container_name: rub-banking-services
+    env_file:
+      - ./services/banking_services/.env
+    environment:
+      PORT: "8083"
+    ports:
+      - "8083:8083"
+    networks:
+      - rub-network
+    restart: unless-stopped
 
 networks:
   rub-network:
