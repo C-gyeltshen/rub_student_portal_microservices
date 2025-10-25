@@ -31,6 +31,21 @@ services:
       - rub-network
     restart: unless-stopped
 
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: rub-api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - banking_services
+      - user_services
+    networks:
+      - rub-network
+    restart: unless-stopped
+
 networks:
   rub-network:
     driver: bridge
