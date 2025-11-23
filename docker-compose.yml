@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     container_name: rub-user-services
     env_file:
-      - .env
+      - ./services/user_services/.env
     environment:
       PORT: "8082"
     ports:

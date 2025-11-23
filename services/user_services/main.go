@@ -30,6 +30,6 @@ func main() {
         port = "8082"
     }
 
-    log.Printf("Menu service starting on :%s", port)
+    log.Printf("User Service starting on :%s", port)
     http.ListenAndServe(":"+port, r)
 }

@@ -40,6 +40,6 @@ func main() {
 		port = "8083"
 	}
 
-	log.Printf("Banking service starting on :%s", port)
+	log.Printf("Banking Service starting on :%s", port)
 	http.ListenAndServe(":"+port, r)
 }

@@ -3,11 +3,13 @@ package database
 import (
 	"log"
 	"os"
+	"strings"
 	"time"
+	"user_services/models"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"user_services/models"
 )
 
 var DB *gorm.DB
@@ -23,9 +25,18 @@ func Connect() error {
         // os.Getenv returns an empty string if the variable is not found
     }
 
+    // 2. Add SSL mode if not present (required for Render and other cloud providers)
+    if !strings.Contains(dsn, "sslmode=") {
+        if strings.Contains(dsn, "?") {
+            dsn += "&sslmode=require"
+        } else {
+            dsn += "?sslmode=require"
+        }
+    }
+
     log.Println("Attempting to connect to database using DSN from environment...")
 
-    // 2. Configure GORM logger
+    // 3. Configure GORM logger
     // Set log level to Warn to reduce noise from slow migration queries
     // You can change to logger.Info if you want to see all queries during development
     gormLogger := logger.Default.LogMode(logger.Warn)
@@ -41,7 +52,7 @@ func Connect() error {
         },
     )
 
-    // 3. Open the database connection
+    // 4. Open the database connection
     DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
         Logger: gormLogger,
     })
@@ -50,7 +61,7 @@ func Connect() error {
         return err
     }
 
-    // 4. Configure connection pooling for better performance
+    // 5. Configure connection pooling for better performance
     sqlDB, err := DB.DB()
     if err != nil {
         log.Printf("Error getting database instance: %v", err)
@@ -62,7 +73,7 @@ func Connect() error {
     sqlDB.SetMaxOpenConns(100)          // Maximum number of open connections
     sqlDB.SetConnMaxLifetime(time.Hour) // Maximum lifetime of a connection
 
-    // 5. AutoMigrate the models
+    // 6. AutoMigrate the models
     // GORM will create or update the tables based on your structs
     err = DB.AutoMigrate(&models.UserData{}, &models.UserRole{})
     if err != nil {
