@@ -228,4 +228,48 @@ Created for performance optimization:
 
 - Stipends: student_id, payment_status, stipend_type, created_at
 - Deductions: student_id, stipend_id, processing_status, deduction_type, deduction_rule_id
+
+## Testing
+
+### gRPC Integration Tests
+
+The Finance Service includes comprehensive gRPC integration tests:
+
+**Documentation:**
+
+- See [TEST_DOCUMENTATION.md](./TEST_DOCUMENTATION.md) for detailed test documentation
+- See [TEST_QUICK_REFERENCE.md](./TEST_QUICK_REFERENCE.md) for quick reference
+
+**Running Tests:**
+
+```bash
+# Start the database
+docker-compose up postgres
+
+# In another terminal, start the gRPC server
+export DATABASE_URL="postgresql://postgres:postgres@localhost:5434/rub_student_portal?sslmode=disable"
+./finance_service
+
+# In another terminal, run tests
+go test ./internal/grpc -v
+```
+
+**Test Coverage:**
+
+- ✅ 7 Deduction Service tests
+- ✅ 6 Stipend Service tests
+- ✅ 13 tests total - All passing
+- ✅ ~0.35s execution time
+
+**Key Tests:**
+
+1. Deduction rule creation and retrieval
+2. Deduction rule listing with pagination
+3. Deduction creation and application
+4. Stipend calculations (with deductions, monthly, annual)
+5. Stipend creation and status updates
+6. Error handling and edge cases
+
+For more details on test setup, utilities, best practices, and troubleshooting, see the complete test documentation.
+
 - Deduction Rules: rule_name, is_active, deduction_type
