@@ -1,13 +1,14 @@
 package grpc
 
 import (
-"fmt"
-"os"
-"testing"
-"time"
+	"fmt"
+	"os"
+	"testing"
+	"time"
 
-"github.com/google/uuid"
-"finance_service/database"
+	"finance_service/database"
+
+	"github.com/google/uuid"
 )
 
 var testStudentID string
