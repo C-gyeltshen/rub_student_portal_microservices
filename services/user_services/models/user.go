@@ -4,7 +4,7 @@ import (
     "time"
     "gorm.io/gorm"
 )
-
+    
 type UserData struct {
     gorm.Model
     // Removed duplicate ID since gorm.Model includes it

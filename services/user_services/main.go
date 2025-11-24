@@ -21,9 +21,16 @@ func main() {
     r.Use(middleware.Logger)
 
     // Menu endpoints (note: no /api prefix)
-    r.Get("/api/get/users", handlers.GetUsers)
-    r.Post("/api/create/user", handlers.CreateUsers)
-    r.Get("/api/get/user/{id}", handlers.GetuserById)
+    r.Get("/users", handlers.GetUsers)
+    r.Post("/users", handlers.CreateUsers)
+    r.Get("/users/{id}", handlers.GetuserById)
+
+    r.Post("/users/create/roles",handlers.CreateRole)
+    r.Get("/users/get/roles", handlers.GetRoles)
+    r.Get("/users/get/role/{id}", handlers.GetRoleById)
+    r.Patch("/users/update/role/{id}",handlers.UpdateRole)
+    r.Delete("/users/delete/role/{id}", handlers.DeleteRole)
+
 
     port := os.Getenv("PORT")
     if port == "" {
