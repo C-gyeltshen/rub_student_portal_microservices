@@ -4,10 +4,56 @@
 
 The Finance Service manages stipend calculations and deductions for students. It supports:
 
-- Full-scholarship and self-funded student stipend management
-- Configurable deduction rules (hostel, electricity, mess fees, etc.)
-- Deduction tracking and audit logging
-- Payment processing and status management
+- **Full-Scholarship and Self-Funded Student Management**: Different deduction rules for each type
+- **Configurable Deduction Rules**: Hostel, electricity, mess fees, and more
+- **Priority-Based Deduction Ordering**: Apply deductions in configurable priority order
+- **Stipend Calculation**: Base amount minus applicable deductions
+- **Payment Processing**: Track payment status and dates
+- **Audit Logging**: Complete history of all stipend and deduction records
+
+## Quick Start
+
+See [QUICK_START.md](./QUICK_START.md) for quick setup and usage examples.
+
+See [API_REFERENCE.md](./API_REFERENCE.md) for complete API documentation.
+
+## Key Features (Task 1.2 Implementation)
+
+### ✅ Stipend Types
+
+- **Full-Scholarship Students**: Limited deductions (configurable per rule)
+- **Self-Funded Students**: More deductions apply by default
+
+### ✅ Stipend Calculation
+
+1. Base amount (annual or monthly)
+2. Fetch applicable deduction rules for student type
+3. Sort by priority (highest first)
+4. Apply each deduction in order
+5. Cap deductions to remaining stipend
+6. Return base, deductions, and net amounts
+
+### ✅ HTTP Endpoints
+
+- `POST /api/stipends`: Create stipend
+- `POST /api/stipends/calculate`: Calculate with deductions
+- `POST /api/stipends/calculate/monthly`: Monthly calculation
+- `POST /api/stipends/calculate/annual`: Annual calculation
+- `GET /api/stipends/{stipendID}`: Get stipend
+- `GET /api/students/{studentID}/stipends`: List student stipends
+- `PATCH /api/stipends/{stipendID}/payment-status`: Update status
+- `GET /api/stipends/{stipendID}/deductions`: Get deductions
+- `POST /api/deduction-rules`: Create rule
+- `GET /api/deduction-rules`: List rules
+- `GET /api/deduction-rules/{ruleID}`: Get rule
+
+### ✅ Deduction Management
+
+- Create configurable deduction rules
+- Support monthly and annual deductions
+- Optional vs. mandatory deductions
+- Min/max deduction bounds
+- Student-type applicability
 
 ## Database Schema
 

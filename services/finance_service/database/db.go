@@ -1,13 +1,13 @@
 package database
 
 import (
-	"log"
-	"os"
-	"time"
+	"finance_service/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"finance_service/models"
+	"log"
+	"os"
+	"time"
 )
 
 var DB *gorm.DB

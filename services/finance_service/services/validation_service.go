@@ -7,17 +7,17 @@ import (
 
 // ValidationService handles cross-service validation for stipends and deductions
 type ValidationService struct {
-	studentClient  *StudentServiceClient
-	bankingClient  *BankingServiceClient
-	userClient     *UserServiceClient
+	studentClient *StudentServiceClient
+	bankingClient *BankingServiceClient
+	userClient    *UserServiceClient
 }
 
 // NewValidationService creates a new validation service
 func NewValidationService() *ValidationService {
 	return &ValidationService{
-		studentClient:  NewStudentServiceClient(),
-		bankingClient:  NewBankingServiceClient(),
-		userClient:     NewUserServiceClient(),
+		studentClient: NewStudentServiceClient(),
+		bankingClient: NewBankingServiceClient(),
+		userClient:    NewUserServiceClient(),
 	}
 }
 
@@ -99,8 +99,8 @@ func (vs *ValidationService) GetStudentInfo(studentID string) (*StudentInfo, err
 	}
 
 	return &StudentInfo{
-		Student:      student,
-		BankDetails:  bankDetails,
+		Student:     student,
+		BankDetails: bankDetails,
 	}, nil
 }
 

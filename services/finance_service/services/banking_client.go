@@ -17,9 +17,9 @@ type BankingServiceClient struct {
 
 // Bank represents bank information from Banking Service
 type Bank struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	CreatedAt string `json:"created_at"`
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	CreatedAt  string `json:"created_at"`
 	ModifiedAt string `json:"modified_at"`
 }
 
