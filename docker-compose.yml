@@ -1,4 +1,21 @@
 services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:13
+    container_name: rub-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: rub_student_portal
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - rub-network
+    restart: unless-stopped
+
   # User Services
   user_services:
     build:
@@ -11,6 +28,8 @@ services:
       PORT: "8082"
     ports:
       - "8082:8082"
+    depends_on:
+      - postgres
     networks:
       - rub-network
     restart: unless-stopped
@@ -27,6 +46,26 @@ services:
       PORT: "8083"
     ports:
       - "8083:8083"
+    depends_on:
+      - postgres
+    networks:
+      - rub-network
+    restart: unless-stopped
+
+  # Finance Services
+  finance_services:
+    build:
+      context: ./services/finance_service
+      dockerfile: Dockerfile
+    container_name: rub-finance-services
+    env_file:
+      - ./services/finance_service/.env
+    environment:
+      PORT: "8084"
+    ports:
+      - "8084:8084"
+    depends_on:
+      - postgres
     networks:
       - rub-network
     restart: unless-stopped
@@ -49,3 +88,6 @@ services:
 networks:
   rub-network:
     driver: bridge
+
+volumes:
+  postgres_data:

@@ -28,3 +28,14 @@ func ForwardToBankingService(w http.ResponseWriter, r *http.Request) {
     
     proxy.ServeHTTP(w, r)
 }
+
+func ForwardToFinanceService(w http.ResponseWriter, r *http.Request) {
+    target, _ := url.Parse("http://finance_services:8084") // Finance Service
+    proxy := httputil.NewSingleHostReverseProxy(target)
+    
+    // Strip /api prefix from the path
+    r.URL.Path = strings.TrimPrefix(r.URL.Path, "/api")
+    r.Header.Set("X-Forwarded-Host", r.Host)
+    
+    proxy.ServeHTTP(w, r)
+}
