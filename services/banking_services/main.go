@@ -21,19 +21,19 @@ func main() {
 	r.Use(middleware.Logger)
 
 	// Bank endpoints
-	r.Get("/api/banks", handlers.GetBanks)
-	r.Post("/api/banks", handlers.CreateBank)
-	r.Get("/api/banks/{id}", handlers.GetBankById)
-	r.Put("/api/banks/{id}", handlers.UpdateBank)
-	r.Delete("/api/banks/{id}", handlers.DeleteBank)
+	r.Get("/banks", handlers.GetBanks)
+	r.Post("/banks", handlers.CreateBank)
+	r.Get("/banks/{id}", handlers.GetBankById)
+	r.Put("/banks/{id}", handlers.UpdateBank)
+	r.Delete("/banks/{id}", handlers.DeleteBank)
 
 	// Student Bank Details endpoints
-	r.Get("/api/student-bank-details", handlers.GetStudentBankDetails)
-	r.Post("/api/student-bank-details", handlers.CreateStudentBankDetails)
-	r.Get("/api/student-bank-details/{id}", handlers.GetStudentBankDetailsById)
-	r.Get("/api/student-bank-details/student/{studentId}", handlers.GetStudentBankDetailsByStudentId)
-	r.Put("/api/student-bank-details/{id}", handlers.UpdateStudentBankDetails)
-	r.Delete("/api/student-bank-details/{id}", handlers.DeleteStudentBankDetails)
+	r.Get("/banks/get/student-bank-details", handlers.GetStudentBankDetails)
+	r.Post("/banks/create/student-bank-details", handlers.CreateStudentBankDetails)
+	r.Get("/banks/get/student-bank-details/{id}", handlers.GetStudentBankDetailsById)
+	r.Get("/banks/get/student-bank-details/student/{studentId}", handlers.GetStudentBankDetailsByStudentId)
+	r.Patch("/banks/update/student-bank-details/{id}", handlers.UpdateStudentBankDetails)
+	r.Delete("/banks/delete/student-bank-details/{id}", handlers.DeleteStudentBankDetails)
 
 	port := os.Getenv("PORT")
 	if port == "" {

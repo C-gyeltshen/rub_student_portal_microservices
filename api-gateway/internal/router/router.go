@@ -16,5 +16,11 @@ func SetupRoutes(r *chi.Mux){
     r.Delete("/api/users/*", proxy.ForwardToUserService)
 	
 	// Banking service routes
-    r.Post("/api/banks/*", proxy.ForwardToBankingService)
+    // r.Post("/api/banks/*", proxy.ForwardToBankingService)
+    r.Get("/api/banks", proxy.ForwardToUserService)
+    r.Post("/api/banks", proxy.ForwardToUserService)
+    r.Get("/api/banks/*", proxy.ForwardToUserService)
+    r.Post("/api/banks/*", proxy.ForwardToUserService)      // Add this line
+    r.Patch("/api/banks/*", proxy.ForwardToUserService)     // Add this line
+    r.Delete("/api/banks/*", proxy.ForwardToUserService)
 }

@@ -10,7 +10,7 @@ import (
 
 func GetUsers(w http.ResponseWriter, r *http.Request) {
     var users []models.UserData
-    if err := database.DB.Find(&users).Error; err != nil {
+    if err := database.DB.Preload("Role").Find(&users).Error; err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
     }
@@ -31,6 +31,9 @@ func CreateUsers(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    // Reload the user with the Role relationship
+    database.DB.Preload("Role").First(&users, users.ID)
+
     w.Header().Set("Content-Type", "application/json")
     w.WriteHeader(http.StatusCreated)
     json.NewEncoder(w).Encode(users)
@@ -40,7 +43,7 @@ func GetuserById(w http.ResponseWriter, r *http.Request) {
     id := chi.URLParam(r, "id")
 
     var users models.UserData
-    if err := database.DB.First(&users, id).Error; err != nil {
+    if err := database.DB.Preload("Role").First(&users, id).Error; err != nil {
         http.Error(w, "Menu item not found", http.StatusNotFound)
         return
     }

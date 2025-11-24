@@ -6,7 +6,6 @@ import (
     "os"
     "user_services/database"
     "user_services/handlers"
-
     "github.com/go-chi/chi/v5"
     "github.com/go-chi/chi/v5/middleware"
 )
@@ -22,15 +21,15 @@ func main() {
 
     // Menu endpoints (note: no /api prefix)
     r.Get("/users", handlers.GetUsers)
-    r.Post("/users", handlers.CreateUsers)
+    r.Post("/users/create", handlers.CreateUsers)
     r.Get("/users/{id}", handlers.GetuserById)
+
 
     r.Post("/users/create/roles",handlers.CreateRole)
     r.Get("/users/get/roles", handlers.GetRoles)
     r.Get("/users/get/role/{id}", handlers.GetRoleById)
     r.Patch("/users/update/role/{id}",handlers.UpdateRole)
     r.Delete("/users/delete/role/{id}", handlers.DeleteRole)
-
 
     port := os.Getenv("PORT")
     if port == "" {
@@ -39,4 +38,4 @@ func main() {
 
     log.Printf("User Service starting on :%s", port)
     http.ListenAndServe(":"+port, r)
-}
+}  
