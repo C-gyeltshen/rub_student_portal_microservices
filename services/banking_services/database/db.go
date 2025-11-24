@@ -64,7 +64,7 @@ func Connect() error {
 
     // 5. AutoMigrate the models
     // GORM will create or update the tables based on your structs
-    err = DB.AutoMigrate(&models.UserData{}, &models.UserRole{})
+    err = DB.AutoMigrate(&models.Bank{}, &models.StudentBankDetails{})
     if err != nil {
         log.Printf("Error running AutoMigrate: %v", err)
         return err
