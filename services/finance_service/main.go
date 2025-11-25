@@ -107,10 +107,16 @@ func startRESTServer(port string) error {
 	})
 
 	// Initialize handlers
+	log.Println("DEBUG: Initializing stipend handler...")
 	stipendHandler := handlers.NewStipendHandler()
+	log.Println("DEBUG: Stipend handler initialized successfully")
+	
+	log.Println("DEBUG: Initializing deduction handler...")
 	deductionHandler := handlers.NewDeductionHandler()
+	log.Println("DEBUG: Deduction handler initialized successfully")
 
 	// API Routes
+	log.Println("DEBUG: Registering API routes...")
 	r.Route("/api", func(r chi.Router) {
 		// Stipend endpoints
 		r.Post("/stipends", stipendHandler.CreateStipend)
@@ -129,6 +135,7 @@ func startRESTServer(port string) error {
 		r.Get("/deduction-rules", deductionHandler.ListDeductionRules)
 		r.Get("/deduction-rules/{ruleID}", deductionHandler.GetDeductionRule)
 	})
+	log.Println("DEBUG: API routes registered successfully")
 
 	log.Printf("REST Server starting on port %s", port)
 	return http.ListenAndServe(":"+port, r)

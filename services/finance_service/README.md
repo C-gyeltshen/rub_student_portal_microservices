@@ -254,6 +254,155 @@ export DATABASE_URL="postgresql://postgres:postgres@localhost:5434/rub_student_p
 go test ./internal/grpc -v
 ```
 
+## Validation Rules (Task 2.1 Implementation)
+
+### ✅ Non-Negative Amount Validation
+
+All financial amounts are validated to be non-negative:
+
+**Rules:**
+
+- Stipend amounts must be ≥ 0
+- Deduction amounts must be ≥ 0
+- Rule base amounts must be ≥ 0
+- Warnings for amounts ≥ 100 million
+
+**Validation Method:**
+
+```go
+validationService := NewValidationService()
+result := validationService.ValidateAmount(5000.50, "Deduction amount")
+if !result.IsValid {
+    // Handle validation errors
+}
+```
+
+### ✅ Deduction Limit Validation
+
+Deductions are validated against rule-defined limits:
+
+**Rules:**
+
+- Each deduction must be ≥ rule's minimum amount
+- Each deduction must be ≤ rule's maximum amount
+- Deduction rules must be active to apply
+- Total deductions cannot exceed stipend (by default)
+
+**Validation Example:**
+
+```go
+result := validationService.ValidateDeductionAmount(
+    3000.0,           // deduction amount
+    ruleID,           // deduction rule ID
+    "Deduction amount",
+)
+```
+
+### ✅ Stipend Validation
+
+Comprehensive stipend input validation:
+
+**Validation Rules:**
+
+- Student ID must be valid (non-nil UUID)
+- Stipend type must be valid (full-scholarship, self-funded, partial)
+- Amount must be non-negative
+- Amount cannot exceed 10 million
+- Journal number must be unique
+- Journal number max length: 255 characters
+
+**Validation Example:**
+
+```go
+result := validationService.ValidateStipendInput(
+    studentID,          // UUID
+    "full-scholarship", // type
+    100000.0,           // amount
+    "JN-STI-2024-001",  // journal number
+)
+```
+
+### ✅ Deduction Rule Validation
+
+Deduction rules are validated on creation:
+
+**Validation Rules:**
+
+- Rule name required, max 100 characters
+- Deduction type required
+- Base, min, and max amounts non-negative
+- Minimum ≤ Maximum
+- Base amount ≤ Maximum
+
+**Validation Example:**
+
+```go
+result := validationService.ValidateDeductionRuleInput(
+    "Hostel Fee",  // ruleName
+    "hostel",      // deductionType
+    5000.0,        // baseAmount
+    1000.0,        // minAmount
+    10000.0,       // maxAmount
+)
+```
+
+### ✅ Total Deduction Validation
+
+Total deductions are validated against stipend amount:
+
+**Rules:**
+
+- Total deductions cannot exceed stipend (by default)
+- Warnings if deductions exceed 80% of stipend
+- Can optionally allow negative net amounts
+
+**Validation Example:**
+
+```go
+result := validationService.ValidateTotalDeductionAgainstStipend(
+    4000.0,   // total deductions
+    5000.0,   // stipend amount
+    false,    // don't allow exceed
+)
+```
+
+### Validation Results Structure
+
+All validation methods return consistent `ValidationResult`:
+
+```go
+type ValidationResult struct {
+    IsValid  bool       // true if all validations passed
+    Errors   []string   // validation errors (block operation)
+    Warnings []string   // warnings (informational)
+}
+```
+
+**Error Handling:**
+
+```go
+if !result.IsValid {
+    return fmt.Errorf(validationService.FormatValidationError(result))
+}
+
+// Log warnings
+if len(result.Warnings) > 0 {
+    log.Printf("%s", validationService.FormatValidationWarnings(result))
+}
+```
+
+### Validation Constants
+
+All validation limits are defined in `services/validation_constants.go`:
+
+- `MaxStipendAmount`: 10,000,000
+- `MaxDeductionAmount`: 100,000,000 (warning threshold)
+- `DeductionPercentageWarning`: 80%
+- `MaxRuleNameLength`: 100 characters
+- `MaxJournalNumberLen`: 255 characters
+
+For complete validation documentation, see [VALIDATION_RULES.md](./VALIDATION_RULES.md).
+
 **Test Coverage:**
 
 - ✅ 7 Deduction Service tests

@@ -43,6 +43,23 @@ type CreateDeductionRuleRequest struct {
 	Priority                  int     `json:"priority"`
 }
 
+// UpdateDeductionRuleRequest represents the request body for updating a deduction rule
+type UpdateDeductionRuleRequest struct {
+	RuleName                  *string  `json:"rule_name,omitempty"`
+	DeductionType             *string  `json:"deduction_type,omitempty"`
+	Description               *string  `json:"description,omitempty"`
+	BaseAmount                *float64 `json:"base_amount,omitempty"`
+	MaxDeductionAmount        *float64 `json:"max_deduction_amount,omitempty"`
+	MinDeductionAmount        *float64 `json:"min_deduction_amount,omitempty"`
+	IsApplicableToFullScholar *bool    `json:"is_applicable_to_full_scholar,omitempty"`
+	IsApplicableToSelfFunded  *bool    `json:"is_applicable_to_self_funded,omitempty"`
+	AppliesMonthly            *bool    `json:"applies_monthly,omitempty"`
+	AppliesAnnually           *bool    `json:"applies_annually,omitempty"`
+	IsOptional                *bool    `json:"is_optional,omitempty"`
+	Priority                  *int     `json:"priority,omitempty"`
+	IsActive                  *bool    `json:"is_active,omitempty"`
+}
+
 // DeductionRuleResponse represents the response for a deduction rule
 type DeductionRuleResponse struct {
 	ID                        string    `json:"id"`
@@ -181,6 +198,112 @@ func (h *DeductionHandler) ListDeductionRules(w http.ResponseWriter, r *http.Req
 		"limit":  limit,
 		"offset": offset,
 	})
+}
+
+// UpdateDeductionRule handles PUT /api/deduction-rules/{ruleID} - updates a deduction rule
+func (h *DeductionHandler) UpdateDeductionRule(w http.ResponseWriter, r *http.Request) {
+	log.Println("UpdateDeductionRule handler called")
+
+	ruleIDStr := chi.URLParam(r, "ruleID")
+	ruleID, err := uuid.Parse(ruleIDStr)
+	if err != nil {
+		http.Error(w, "Invalid rule ID format", http.StatusBadRequest)
+		return
+	}
+
+	var req UpdateDeductionRuleRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, fmt.Sprintf("Invalid request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Build update map with only non-nil values
+	updates := make(map[string]interface{})
+	if req.RuleName != nil {
+		updates["rule_name"] = *req.RuleName
+	}
+	if req.DeductionType != nil {
+		updates["deduction_type"] = *req.DeductionType
+	}
+	if req.Description != nil {
+		updates["description"] = *req.Description
+	}
+	if req.BaseAmount != nil {
+		updates["base_amount"] = *req.BaseAmount
+	}
+	if req.MaxDeductionAmount != nil {
+		updates["max_deduction_amount"] = *req.MaxDeductionAmount
+	}
+	if req.MinDeductionAmount != nil {
+		updates["min_deduction_amount"] = *req.MinDeductionAmount
+	}
+	if req.IsApplicableToFullScholar != nil {
+		updates["is_applicable_to_full_scholar"] = *req.IsApplicableToFullScholar
+	}
+	if req.IsApplicableToSelfFunded != nil {
+		updates["is_applicable_to_self_funded"] = *req.IsApplicableToSelfFunded
+	}
+	if req.AppliesMonthly != nil {
+		updates["applies_monthly"] = *req.AppliesMonthly
+	}
+	if req.AppliesAnnually != nil {
+		updates["applies_annually"] = *req.AppliesAnnually
+	}
+	if req.IsOptional != nil {
+		updates["is_optional"] = *req.IsOptional
+	}
+	if req.Priority != nil {
+		updates["priority"] = *req.Priority
+	}
+	if req.IsActive != nil {
+		updates["is_active"] = *req.IsActive
+	}
+
+	if len(updates) == 0 {
+		http.Error(w, "No fields to update", http.StatusBadRequest)
+		return
+	}
+
+	rule, err := h.stipendService.UpdateDeductionRule(ruleID, updates)
+	if err != nil {
+		log.Printf("Error updating deduction rule: %v", err)
+		if err.Error() == "deduction rule not found" {
+			http.Error(w, "Deduction rule not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, fmt.Sprintf("Failed to update deduction rule: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(toDeductionRuleResponse(rule))
+}
+
+// DeleteDeductionRule handles DELETE /api/deduction-rules/{ruleID} - deletes a deduction rule
+func (h *DeductionHandler) DeleteDeductionRule(w http.ResponseWriter, r *http.Request) {
+	log.Println("DeleteDeductionRule handler called")
+
+	ruleIDStr := chi.URLParam(r, "ruleID")
+	ruleID, err := uuid.Parse(ruleIDStr)
+	if err != nil {
+		http.Error(w, "Invalid rule ID format", http.StatusBadRequest)
+		return
+	}
+
+	err = h.stipendService.DeleteDeductionRule(ruleID)
+	if err != nil {
+		log.Printf("Error deleting deduction rule: %v", err)
+		if err.Error() == "deduction rule not found" {
+			http.Error(w, "Deduction rule not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, fmt.Sprintf("Failed to delete deduction rule: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // Helper functions

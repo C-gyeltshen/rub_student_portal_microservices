@@ -149,6 +149,18 @@ func (ss *StipendService) CalculateStipendWithDeductions(
 	result.TotalDeductions = totalDeductions
 	result.NetStipendAmount = currentStipendAmount
 
+	// Validate total deductions against stipend amount
+	validationService := NewValidationService()
+	deductionValidation := validationService.ValidateTotalDeductionAgainstStipend(
+		totalDeductions,
+		baseAmount,
+		true, // allow exceed since we cap deductions to remaining stipend
+	)
+
+	if len(deductionValidation.Warnings) > 0 {
+		log.Printf("[WARNING] Stipend calculation warnings: %v", deductionValidation.Warnings)
+	}
+
 	log.Printf("Stipend calculation completed: base=%.2f, deductions=%.2f, net=%.2f",
 		result.BaseStipendAmount, result.TotalDeductions, result.NetStipendAmount)
 
@@ -300,21 +312,24 @@ func (ss *StipendService) CalculateAnnualStipendForStudent(
 
 // validateStipendInput validates the input for stipend creation
 func (ss *StipendService) validateStipendInput(studentID uuid.UUID, stipendType string, amount float64) error {
-	if studentID == uuid.Nil {
-		return fmt.Errorf("invalid student ID")
+	validationService := NewValidationService()
+
+	// Validate stipend input using validation service
+	validationResult := validationService.ValidateStipendInput(
+		studentID,
+		stipendType,
+		amount,
+		"", // journal number is validated separately in CreateStipendForStudent
+	)
+
+	if !validationResult.IsValid {
+		validationService.LogValidationResult("ValidateStipendInput", validationResult)
+		return fmt.Errorf("%s", validationService.FormatValidationError(validationResult))
 	}
 
-	validTypes := map[string]bool{"full-scholarship": true, "self-funded": true}
-	if !validTypes[stipendType] {
-		return fmt.Errorf("invalid stipend type: %s", stipendType)
-	}
-
-	if amount <= 0 {
-		return fmt.Errorf("stipend amount must be positive")
-	}
-
-	if amount > 10000000 {
-		return fmt.Errorf("stipend amount exceeds maximum allowed (10,000,000)")
+	// Log warnings if any
+	if len(validationResult.Warnings) > 0 {
+		log.Printf("[WARNING] %s", validationService.FormatValidationWarnings(validationResult))
 	}
 
 	return nil
@@ -432,6 +447,106 @@ func (ss *StipendService) CreateDeductionRule(rule *models.DeductionRule) error 
 
 	log.Printf("Deduction rule created with ID: %s", rule.ID)
 	return nil
+}
+
+// UpdateDeductionRule updates an existing deduction rule
+func (ss *StipendService) UpdateDeductionRule(ruleID uuid.UUID, updates map[string]interface{}) (*models.DeductionRule, error) {
+	log.Printf("Updating deduction rule: %s", ruleID)
+
+	// Fetch the existing rule first
+	var rule models.DeductionRule
+	if err := ss.db.First(&rule, "id = ?", ruleID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, fmt.Errorf("deduction rule not found")
+		}
+		return nil, fmt.Errorf("failed to fetch deduction rule: %w", err)
+	}
+
+	// Validate updates
+	if ruleName, ok := updates["rule_name"]; ok {
+		if ruleName == "" {
+			return nil, fmt.Errorf("rule name cannot be empty")
+		}
+		// Check for duplicate rule name (excluding current rule)
+		var existingRule models.DeductionRule
+		if err := ss.db.Where("rule_name = ? AND id != ?", ruleName, ruleID).First(&existingRule).Error; err == nil {
+			return nil, fmt.Errorf("rule name already exists")
+		}
+	}
+
+	if deductionType, ok := updates["deduction_type"]; ok && deductionType == "" {
+		return nil, fmt.Errorf("deduction type cannot be empty")
+	}
+
+	if baseAmount, ok := updates["base_amount"]; ok {
+		if ba, err := toFloat64(baseAmount); err != nil || ba < 0 {
+			return nil, fmt.Errorf("base amount must be non-negative")
+		}
+	}
+
+	if maxAmount, ok := updates["max_deduction_amount"]; ok {
+		if ma, err := toFloat64(maxAmount); err != nil || ma < 0 {
+			return nil, fmt.Errorf("max deduction amount must be non-negative")
+		}
+	}
+
+	if minAmount, ok := updates["min_deduction_amount"]; ok {
+		if mi, err := toFloat64(minAmount); err != nil || mi < 0 {
+			return nil, fmt.Errorf("min deduction amount must be non-negative")
+		}
+	}
+
+	// Perform the update
+	if err := ss.db.Model(&rule).Updates(updates).Error; err != nil {
+		log.Printf("Error updating deduction rule: %v", err)
+		return nil, fmt.Errorf("failed to update deduction rule: %w", err)
+	}
+
+	log.Printf("Deduction rule %s updated successfully", ruleID)
+	return &rule, nil
+}
+
+// DeleteDeductionRule soft-deletes a deduction rule by marking it as inactive
+// Note: We soft-delete to maintain referential integrity with deductions
+func (ss *StipendService) DeleteDeductionRule(ruleID uuid.UUID) error {
+	log.Printf("Deleting deduction rule: %s", ruleID)
+
+	var rule models.DeductionRule
+	if err := ss.db.First(&rule, "id = ?", ruleID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return fmt.Errorf("deduction rule not found")
+		}
+		return fmt.Errorf("failed to fetch deduction rule: %w", err)
+	}
+
+	// Soft delete by marking as inactive
+	if err := ss.db.Model(&rule).Update("is_active", false).Error; err != nil {
+		log.Printf("Error deleting deduction rule: %v", err)
+		return fmt.Errorf("failed to delete deduction rule: %w", err)
+	}
+
+	log.Printf("Deduction rule %s deleted successfully", ruleID)
+	return nil
+}
+
+// Helper function to convert interface{} to float64
+func toFloat64(val interface{}) (float64, error) {
+	switch v := val.(type) {
+	case float64:
+		return v, nil
+	case int:
+		return float64(v), nil
+	case int64:
+		return float64(v), nil
+	case string:
+		var f float64
+		if _, err := fmt.Sscanf(v, "%f", &f); err != nil {
+			return 0, err
+		}
+		return f, nil
+	default:
+		return 0, fmt.Errorf("unsupported type for conversion to float64")
+	}
 }
 
 // GetStudentStipendsWithPagination retrieves all stipends for a student with pagination (returns converted service types)

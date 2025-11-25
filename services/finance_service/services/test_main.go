@@ -1,17 +1,17 @@
 package services
 
 import (
-"os"
-"testing"
+	"os"
+	"testing"
 
-"finance_service/database"
+	"finance_service/database"
 )
 
 // TestMain is called before tests run and initializes the test database
 func TestMain(m *testing.M) {
 	// Set DATABASE_URL if not already set
 	if os.Getenv("DATABASE_URL") == "" {
-		os.Setenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5434/rub_student_portal?sslmode=disable")
+		os.Setenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/rub_student_portal?sslmode=disable")
 	}
 
 	// Initialize database connection

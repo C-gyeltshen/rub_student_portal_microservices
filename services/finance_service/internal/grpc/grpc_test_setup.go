@@ -42,7 +42,7 @@ func TestMain(m *testing.M) {
 	fmt.Println("========== TestMain called ==========")
 	// Set DATABASE_URL if not already set
 	if os.Getenv("DATABASE_URL") == "" {
-		os.Setenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5434/rub_student_portal?sslmode=disable")
+		os.Setenv("DATABASE_URL", "postgresql://postgres:postgres@postgres:5432/rub_student_portal?sslmode=disable")
 	}
 
 	// Initialize database connection

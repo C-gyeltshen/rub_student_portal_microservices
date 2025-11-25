@@ -39,16 +39,20 @@ func (ds *DeductionService) CreateDeductionRule(
 ) (*DeductionRule, error) {
 	log.Printf("Creating deduction rule: %s (type: %s)", ruleName, deductionType)
 
-	if ruleName == "" {
-		return nil, fmt.Errorf("rule name is required")
+	// Validate input using validation service
+	validationService := NewValidationService()
+	validationResult := validationService.ValidateDeductionRuleInput(
+		ruleName, deductionType, defaultAmount, minAmount, maxAmount,
+	)
+
+	if !validationResult.IsValid {
+		validationService.LogValidationResult("CreateDeductionRule", validationResult)
+		return nil, fmt.Errorf("%s", validationService.FormatValidationError(validationResult))
 	}
 
-	if deductionType == "" {
-		return nil, fmt.Errorf("deduction type is required")
-	}
-
-	if defaultAmount < 0 {
-		return nil, fmt.Errorf("default amount cannot be negative")
+	// Log warnings if any
+	if len(validationResult.Warnings) > 0 {
+		log.Printf("[WARNING] %s", validationService.FormatValidationWarnings(validationResult))
 	}
 
 	// Create the model
@@ -239,8 +243,19 @@ func (ds *DeductionService) CreateDeduction(
 ) (*Deduction, error) {
 	log.Printf("Creating deduction for student %s", studentID)
 
-	if amount <= 0 {
-		return nil, fmt.Errorf("amount must be positive")
+	// Validate using validation service
+	validationService := NewValidationService()
+
+	// Validate the deduction amount against the rule
+	validationResult := validationService.ValidateDeductionAmount(amount, ruleID, "Deduction amount")
+	if !validationResult.IsValid {
+		validationService.LogValidationResult("CreateDeduction", validationResult)
+		return nil, fmt.Errorf("%s", validationService.FormatValidationError(validationResult))
+	}
+
+	// Log warnings if any
+	if len(validationResult.Warnings) > 0 {
+		log.Printf("[WARNING] %s", validationService.FormatValidationWarnings(validationResult))
 	}
 
 	modelDeduction := &models.Deduction{
