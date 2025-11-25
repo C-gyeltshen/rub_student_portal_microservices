@@ -6,7 +6,6 @@ import (
 	"os"
 	"banking_services/database"
 	"banking_services/handlers"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -20,11 +19,11 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
-	// Bank endpoints
+	// Bank endpoints	
 	r.Get("/banks", handlers.GetBanks)
 	r.Post("/banks", handlers.CreateBank)
 	r.Get("/banks/{id}", handlers.GetBankById)
-	r.Put("/banks/{id}", handlers.UpdateBank)
+	r.Patch("/banks/{id}", handlers.UpdateBank)
 	r.Delete("/banks/{id}", handlers.DeleteBank)
 
 	// Student Bank Details endpoints
