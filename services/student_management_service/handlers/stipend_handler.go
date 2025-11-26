@@ -47,19 +47,19 @@ func calculateEligibility(student models.Student) models.StipendEligibility {
 		return eligibility
 	}
 
-	// Check academic standing
-	if student.AcademicStanding == "probation" || student.AcademicStanding == "suspended" {
-		eligibility.IsEligible = false
-		eligibility.Reasons = append(eligibility.Reasons, "Poor academic standing")
-		return eligibility
-	}
+	// Preload college to check stipend policy
+	database.DB.Preload("College").First(&student, student.ID)
 
-	// Check GPA (assuming minimum 2.0)
-	if student.GPA < 2.0 {
-		eligibility.IsEligible = false
-		eligibility.Reasons = append(eligibility.Reasons, "GPA below minimum requirement")
-		return eligibility
+	// Check financing type and college policy
+	if student.FinancingType == "self-financed" {
+		// Check if college allows self-financed students to get stipend
+		if student.College.ID != 0 && !student.College.AllowSelfFinancedStipend {
+			eligibility.IsEligible = false
+			eligibility.Reasons = append(eligibility.Reasons, "College does not allow self-financed students to receive stipend")
+			return eligibility
+		}
 	}
+	// Scholarship students are always eligible for stipend (if other criteria met)
 
 	// Check if program has stipend
 	if student.Program.ID != 0 && !student.Program.HasStipend {
@@ -71,8 +71,8 @@ func calculateEligibility(student models.Student) models.StipendEligibility {
 	// Student is eligible
 	eligibility.IsEligible = true
 	eligibility.ExpectedAmount = student.Program.StipendAmount
-	eligibility.AcademicStanding = student.AcademicStanding
-	eligibility.Reasons = append(eligibility.Reasons, "All eligibility criteria met")
+	eligibility.FinancingType = student.FinancingType
+	eligibility.Reasons = append(eligibility.Reasons, "Student meets all eligibility criteria")
 
 	return eligibility
 }

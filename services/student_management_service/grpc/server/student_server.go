@@ -250,19 +250,20 @@ func (s *StudentServer) CheckStipendEligibility(ctx context.Context, req *pb.Sti
 		}, nil
 	}
 
-	if student.GPA < 2.5 {
-		return &pb.StipendEligibilityResponse{
-			Eligible: false,
-			Reason:   fmt.Sprintf("GPA (%.2f) is below minimum requirement (2.5)", student.GPA),
-		}, nil
-	}
+	// Preload college to check stipend policy
+	database.DB.Preload("College").First(&student, req.StudentId)
 
-	if student.AcademicStanding != "Good Standing" {
-		return &pb.StipendEligibilityResponse{
-			Eligible: false,
-			Reason:   fmt.Sprintf("Academic standing is %s", student.AcademicStanding),
-		}, nil
+	// Check financing type and college policy
+	if student.FinancingType == "self-financed" {
+		// Check if college allows self-financed students to get stipend
+		if student.College.ID != 0 && !student.College.AllowSelfFinancedStipend {
+			return &pb.StipendEligibilityResponse{
+				Eligible: false,
+				Reason:   "College does not allow self-financed students to receive stipend",
+			}, nil
+		}
 	}
+	// Scholarship students are always eligible for stipend (if other criteria met)
 
 	if !student.Program.HasStipend {
 		return &pb.StipendEligibilityResponse{
@@ -300,7 +301,6 @@ func convertStudentToProto(student *models.Student) *pb.StudentResponse {
 		GuardianPhone:    student.GuardianPhoneNumber,
 		AdmissionDate:    student.EnrollmentDate,
 		EnrollmentStatus: student.Status,
-		Gpa:              student.GPA,
 		AcademicStanding: student.AcademicStanding,
 		CreatedAt:        timestamppb.New(student.CreatedAt),
 		UpdatedAt:        timestamppb.New(student.UpdatedAt),

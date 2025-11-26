@@ -7,7 +7,7 @@ import (
 
 // DeductionRule defines rules for deductions that can be applied to stipends
 type DeductionRule struct {
-	ID                        uuid.UUID  `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
+	ID                        uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	RuleName                  string     `gorm:"type:varchar(100);not null;unique;index" json:"rule_name"`
 	DeductionType             string     `gorm:"type:varchar(100);not null" json:"deduction_type"` // hostel, electricity, mess_fees, etc
 	Description               string     `gorm:"type:text" json:"description"`

@@ -1,21 +1,4 @@
 services:
-<<<<<<< HEAD
-  # PostgreSQL Database
-  postgres:
-    image: postgres:13
-    container_name: rub-postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: rub_student_portal
-    ports:
-      - "5434:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./db.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - rub-network
-=======
   # PostgreSQL Database (shared server, separate databases per service)
   postgres:
     image: postgres:15-alpine
@@ -36,7 +19,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
->>>>>>> 2c2a2f17e578ff47b272988daa62c1068f403e29
     restart: unless-stopped
 
   # User Services
@@ -53,15 +35,10 @@ services:
       DATABASE_URL: "postgresql://rubadmin:rubpassword@postgres:5432/user_service_db?sslmode=disable"
     ports:
       - "8082:8082"
-<<<<<<< HEAD
-    depends_on:
-      - postgres
-=======
       - "50052:50052"
     depends_on:
       postgres:
         condition: service_healthy
->>>>>>> 2c2a2f17e578ff47b272988daa62c1068f403e29
     networks:
       - rub-network
     restart: unless-stopped
@@ -80,35 +57,37 @@ services:
       DATABASE_URL: "postgresql://rubadmin:rubpassword@postgres:5432/banking_service_db?sslmode=disable"
     ports:
       - "8083:8083"
-<<<<<<< HEAD
-    depends_on:
-      - postgres
-=======
       - "50053:50053"
     depends_on:
       postgres:
         condition: service_healthy
->>>>>>> 2c2a2f17e578ff47b272988daa62c1068f403e29
     networks:
       - rub-network
     restart: unless-stopped
 
-<<<<<<< HEAD
   # Finance Services
   finance_services:
     build:
-      context: ./services/finance_service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/finance_service/Dockerfile
     container_name: rub-finance-services
     env_file:
       - ./services/finance_service/.env
     environment:
-      PORT: "8084"
+      PORT: "8085"
+      GRPC_PORT: "50055"
+      DATABASE_URL: "postgresql://rubadmin:rubpassword@postgres:5432/finance_service_db?sslmode=disable"
+      STUDENT_GRPC_URL: "student_management_service:50054"
     ports:
-      - "8084:8084"
+      - "8085:8085"
+      - "50055:50055"
     depends_on:
-      - postgres
-=======
+      postgres:
+        condition: service_healthy
+    networks:
+      - rub-network
+    restart: unless-stopped
+
   # Student Management Services
   student_management_service:
     build:
@@ -120,16 +99,12 @@ services:
     environment:
       PORT: "8084"
       GRPC_PORT: "50054"
-      DATABASE_URL: "postgresql://rubadmin:rubpassword@postgres:5432/student_service_db?sslmode=disable"
       USER_GRPC_URL: "user_services:50052"
       BANKING_GRPC_URL: "banking_services:50053"
+      FINANCE_GRPC_URL: "finance_services:50055"
     ports:
       - "8084:8084"
       - "50054:50054"
-    depends_on:
-      postgres:
-        condition: service_healthy
->>>>>>> 2c2a2f17e578ff47b272988daa62c1068f403e29
     networks:
       - rub-network
     restart: unless-stopped
@@ -146,6 +121,7 @@ services:
       - banking_services
       - user_services
       - student_management_service
+      - finance_services
     networks:
       - rub-network
     restart: unless-stopped

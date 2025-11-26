@@ -9,7 +9,7 @@ import (
 
 // Transaction represents a money transfer transaction for stipend distribution
 type Transaction struct {
-	ID                uuid.UUID     `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
+	ID                uuid.UUID     `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	StipendID         uuid.UUID     `gorm:"type:uuid;not null;index" json:"stipend_id"`
 	StudentID         uuid.UUID     `gorm:"type:uuid;not null;index" json:"student_id"`
 	Amount            float64       `gorm:"type:decimal(10,2);not null;check:amount > 0" json:"amount"`

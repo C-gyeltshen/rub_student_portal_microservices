@@ -7,7 +7,7 @@ import (
 
 // Deduction represents a deduction applied to a student's stipend
 type Deduction struct {
-	ID               uuid.UUID  `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
+	ID               uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	StudentID        uuid.UUID  `gorm:"type:uuid;not null;index" json:"student_id"`
 	DeductionRuleID  uuid.UUID  `gorm:"type:uuid;not null" json:"deduction_rule_id"`
 	StipendID        uuid.UUID  `gorm:"type:uuid;not null" json:"stipend_id"`

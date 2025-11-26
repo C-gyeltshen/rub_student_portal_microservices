@@ -10,4 +10,7 @@ CREATE DATABASE banking_service_db;
 -- Create database for Student Management Service
 CREATE DATABASE student_service_db;
 
+-- Create database for Finance Service
+CREATE DATABASE finance_service_db;
+
 -- Note: Each service will auto-create its own tables using GORM AutoMigrate

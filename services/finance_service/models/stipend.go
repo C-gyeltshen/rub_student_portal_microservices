@@ -7,7 +7,7 @@ import (
 
 // Stipend represents a stipend payment record for a student
 type Stipend struct {
-	ID            uuid.UUID  `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
+	ID            uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	StudentID     uuid.UUID  `gorm:"type:uuid;not null" json:"student_id"`
 	Amount        float64    `gorm:"type:decimal(10,2);not null" json:"amount"`
 	StipendType   string     `gorm:"type:varchar(50);not null" json:"stipend_type"` // full-scholarship, self-funded

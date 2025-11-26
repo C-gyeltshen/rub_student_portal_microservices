@@ -35,9 +35,9 @@ type Student struct {
 	Semester         int     `json:"semester"`
 	EnrollmentDate   string  `json:"enrollment_date"`
 	GraduationDate   string  `json:"graduation_date"`
-	Status           string  `json:"status" gorm:"default:'active'"` // active, inactive, graduated, suspended
-	AcademicStanding string  `json:"academic_standing"` // good, probation, etc.
-	GPA              float64 `json:"gpa"`
+	Status           string `json:"status" gorm:"default:'active'"` // active, inactive, graduated, suspended
+	AcademicStanding string `json:"academic_standing"` // good, probation, etc.
+	FinancingType    string `json:"financing_type"` // scholarship, self-financed
 	
 	// Guardian Information
 	GuardianName        string `json:"guardian_name"`

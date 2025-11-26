@@ -45,11 +45,11 @@ type StipendHistory struct {
 
 // StipendEligibility represents eligibility criteria and status
 type StipendEligibility struct {
-	StudentID        uint    `json:"student_id"`
-	IsEligible       bool    `json:"is_eligible"`
+	StudentID        uint     `json:"student_id"`
+	IsEligible       bool     `json:"is_eligible"`
 	Reasons          []string `json:"reasons"`
-	ExpectedAmount   float64 `json:"expected_amount"`
-	AcademicStanding string  `json:"academic_standing"`
-	AttendanceRate   float64 `json:"attendance_rate"`
-	HasPendingIssues bool    `json:"has_pending_issues"`
+	ExpectedAmount   float64  `json:"expected_amount"`
+	FinancingType    string   `json:"financing_type"` // scholarship, self-financed
+	AttendanceRate   float64  `json:"attendance_rate"`
+	HasPendingIssues bool     `json:"has_pending_issues"`
 }

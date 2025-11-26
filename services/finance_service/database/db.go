@@ -61,8 +61,33 @@ func Connect() error {
 	return nil
 }
 
+// CreateExtensions ensures required PostgreSQL extensions are available
+func CreateExtensions() error {
+	// Create pgcrypto extension if it doesn't exist
+	if err := DB.Exec("CREATE EXTENSION IF NOT EXISTS pgcrypto").Error; err != nil {
+		log.Printf("Error creating pgcrypto extension: %v", err)
+		return err
+	}
+	log.Println("pgcrypto extension verified!")
+
+	// Create uuid-ossp extension if it doesn't exist
+	if err := DB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"").Error; err != nil {
+		log.Printf("Error creating uuid-ossp extension: %v", err)
+		return err
+	}
+	log.Println("uuid-ossp extension verified!")
+
+	return nil
+}
+
 // Migrate runs database migrations for the finance service models
 func Migrate() error {
+	// First, ensure extensions exist
+	if err := CreateExtensions(); err != nil {
+		log.Printf("Error creating extensions: %v", err)
+		return err
+	}
+
 	if err := DB.AutoMigrate(
 		&models.Stipend{},
 		&models.Deduction{},
