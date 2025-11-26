@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package banking;
+option go_package = "banking_services/pb/banking";
+
+// Banking Service - Manages bank accounts and student bank details
+service BankingService {
+  // Get bank details for a student
+  rpc GetStudentBankDetails(GetBankDetailsRequest) returns (BankDetailsResponse);
+  
+  // Create or update bank details
+  rpc UpsertBankDetails(UpsertBankDetailsRequest) returns (BankDetailsResponse);
+  
+  // Verify bank account exists
+  rpc VerifyBankAccount(VerifyBankAccountRequest) returns (VerifyBankAccountResponse);
+}
+
+message GetBankDetailsRequest {
+  uint32 student_id = 1;
+}
+
+message UpsertBankDetailsRequest {
+  uint32 student_id = 1;
+  uint32 bank_id = 2;
+  string account_number = 3;
+  string account_holder_name = 4;
+}
+
+message VerifyBankAccountRequest {
+  string account_number = 1;
+  uint32 bank_id = 2;
+}
+
+message BankDetailsResponse {
+  uint32 id = 1;
+  uint32 student_id = 2;
+  uint32 bank_id = 3;
+  string bank_name = 4;
+  string account_number = 5;
+  string account_holder_name = 6;
+  bool verified = 7;
+}
+
+message VerifyBankAccountResponse {
+  bool valid = 1;
+  string message = 2;
+}
