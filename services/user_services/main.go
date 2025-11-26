@@ -37,7 +37,7 @@ func main() {
     r.Post("/users/create/finance-officer", handlers.CreateFinanceOfficer)
     r.Get("/users/{id}", handlers.GetuserById)
     r.Get("/users/role/{roleId}", handlers.GetUsersByRoleId)
-    r.Delete("/users/role/{roleId}", handlers.DeleteUsersByRoleId)
+    r.Delete("/users/role/{roleId}", handlers.DeleteUsersByRoleId)          
 
 
     r.Post("/users/create/roles",handlers.CreateRole)
