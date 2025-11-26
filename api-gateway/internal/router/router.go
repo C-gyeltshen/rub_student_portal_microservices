@@ -2,30 +2,59 @@ package router
 
 import (
 	"api-gateway/internal/proxy"
+	"log"
+	"net/http"
 
 	"github.com/go-chi/chi/v5"
 )
 
 func SetupRoutes(r *chi.Mux){
-	// Mount subrouters for each service
-	// These use Mount which matches prefix
+	log.Println("SetupRoutes called - registering routes")
 	
-	// Finance service routes
-	financeRouter := chi.NewRouter()
-	financeRouter.Get("/*", proxy.ForwardToFinanceService)
-	financeRouter.Post("/*", proxy.ForwardToFinanceService)
-	r.Mount("/api/finance", financeRouter)
+	// Health check endpoint
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok"}`))
+	})
+	
+	// Test route for debugging
+	r.Get("/test", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"message":"test route works"}`))
+	})
+	
+	log.Println("Routes registered successfully")
+	
+	// Banking service routes - use direct routing instead of Mount
+	r.Route("/api/banks", func(r chi.Router) {
+		r.Get("/", proxy.ForwardToBankingService)
+		r.Post("/", proxy.ForwardToBankingService)
+		r.Get("/*", proxy.ForwardToBankingService)
+		r.Post("/*", proxy.ForwardToBankingService)
+		r.Put("/*", proxy.ForwardToBankingService)
+		r.Delete("/*", proxy.ForwardToBankingService)
+	})
 	
 	// User service routes
-	userRouter := chi.NewRouter()
-	userRouter.Get("/*", proxy.ForwardToUserService)
-	userRouter.Post("/*", proxy.ForwardToUserService)
-	r.Mount("/api/users", userRouter)
+	r.Route("/api/users", func(r chi.Router) {
+		r.Get("/", proxy.ForwardToUserService)
+		r.Post("/", proxy.ForwardToUserService)
+		r.Get("/*", proxy.ForwardToUserService)
+		r.Post("/*", proxy.ForwardToUserService)
+		r.Put("/*", proxy.ForwardToUserService)
+		r.Delete("/*", proxy.ForwardToUserService)
+	})
 	
-	// Banking service routes
-	bankRouter := chi.NewRouter()
-	bankRouter.Get("/*", proxy.ForwardToBankingService)
-	bankRouter.Post("/*", proxy.ForwardToBankingService)
-	r.Mount("/api/banks", bankRouter)
+	// Finance service routes
+	r.Route("/api/finance", func(r chi.Router) {
+		r.Get("/", proxy.ForwardToFinanceService)
+		r.Post("/", proxy.ForwardToFinanceService)
+		r.Get("/*", proxy.ForwardToFinanceService)
+		r.Post("/*", proxy.ForwardToFinanceService)
+		r.Put("/*", proxy.ForwardToFinanceService)
+		r.Delete("/*", proxy.ForwardToFinanceService)
+	})
 }
 

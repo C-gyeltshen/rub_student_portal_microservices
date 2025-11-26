@@ -2,14 +2,15 @@
 
 ## Overview
 
-The Finance Service manages stipend calculations and deductions for students. It supports:
+The Finance Service manages stipend calculations, deductions, and money transfers for students. It supports:
 
 - **Full-Scholarship and Self-Funded Student Management**: Different deduction rules for each type
 - **Configurable Deduction Rules**: Hostel, electricity, mess fees, and more
 - **Priority-Based Deduction Ordering**: Apply deductions in configurable priority order
 - **Stipend Calculation**: Base amount minus applicable deductions
-- **Payment Processing**: Track payment status and dates
-- **Audit Logging**: Complete history of all stipend and deduction records
+- **Money Transfer**: Transfer stipends directly to student bank accounts
+- **Payment Processing**: Track payment status, transfer history, and transaction details
+- **Audit Logging**: Complete history of all stipend, deduction, and transaction records
 
 ## Quick Start
 
@@ -17,7 +18,7 @@ See [QUICK_START.md](./QUICK_START.md) for quick setup and usage examples.
 
 See [API_REFERENCE.md](./API_REFERENCE.md) for complete API documentation.
 
-## Key Features (Task 1.2 Implementation)
+## Key Features (Task 1.2 + Money Transfer Implementation)
 
 ### ✅ Stipend Types
 
@@ -33,7 +34,7 @@ See [API_REFERENCE.md](./API_REFERENCE.md) for complete API documentation.
 5. Cap deductions to remaining stipend
 6. Return base, deductions, and net amounts
 
-### ✅ HTTP Endpoints
+### ✅ HTTP Endpoints - Stipends & Deductions
 
 - `POST /api/stipends`: Create stipend
 - `POST /api/stipends/calculate`: Calculate with deductions
@@ -46,6 +47,16 @@ See [API_REFERENCE.md](./API_REFERENCE.md) for complete API documentation.
 - `POST /api/deduction-rules`: Create rule
 - `GET /api/deduction-rules`: List rules
 - `GET /api/deduction-rules/{ruleID}`: Get rule
+
+### ✅ Money Transfer Endpoints (NEW!)
+
+- `POST /api/transfers/initiate`: Initiate a money transfer to student's bank
+- `POST /api/transfers/{transactionID}/process`: Process pending transfer via payment gateway
+- `GET /api/transfers/{transactionID}/status`: Check transfer status
+- `GET /api/stipends/{stipendID}/transactions`: Get all transactions for a stipend
+- `GET /api/students/{studentID}/transactions`: Get all transactions for a student
+- `POST /api/transfers/{transactionID}/cancel`: Cancel a pending/processing transfer
+- `POST /api/transfers/{transactionID}/retry`: Retry a failed transfer
 
 ### ✅ Deduction Management
 

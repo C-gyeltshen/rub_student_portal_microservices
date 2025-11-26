@@ -2,12 +2,13 @@ package database
 
 import (
 	"finance_service/models"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"log"
 	"os"
 	"time"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var DB *gorm.DB
@@ -25,9 +26,7 @@ func Connect() error {
 	log.Println("Attempting to connect to database using DSN from environment...")
 
 	// 2. Configure GORM logger
-	gormLogger := logger.Default.LogMode(logger.Warn)
-
-	gormLogger = logger.New(
+	gormLogger := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags),
 		logger.Config{
 			SlowThreshold:             time.Second,
@@ -68,6 +67,8 @@ func Migrate() error {
 		&models.Stipend{},
 		&models.Deduction{},
 		&models.DeductionRule{},
+		&models.Transaction{},
+		// &models.AuditLog{}, // TODO: Enable audit logs after testing search and reports
 	); err != nil {
 		log.Printf("Error running migrations: %v", err)
 		return err

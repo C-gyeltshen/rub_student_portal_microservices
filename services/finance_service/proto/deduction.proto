@@ -4,7 +4,7 @@ package pb;
 
 option go_package = "./pkg/pb";
 
-// DeductionService provides gRPC APIs for deduction rules and management
+// DeductionService provides gRPC APIs for deduction rule and deduction management
 service DeductionService {
   // CreateDeductionRule creates a new deduction rule
   rpc CreateDeductionRule(CreateDeductionRuleRequest) returns (DeductionRuleResponse);
@@ -31,25 +31,6 @@ service DeductionService {
   rpc GetStudentDeductions(GetStudentDeductionsRequest) returns (DeductionsResponse);
 }
 
-// DeductionRuleType defines applicable deduction rule types
-enum DeductionRuleType {
-  DEDUCTION_RULE_TYPE_UNSPECIFIED = 0;
-  HOSTEL = 1;
-  ELECTRICITY = 2;
-  MESS_FEES = 3;
-  WATER = 4;
-  MAINTENANCE = 5;
-  OTHER = 6;
-}
-
-// ApplicableStudentType defines which student types a rule applies to
-enum ApplicableStudentType {
-  APPLICABLE_STUDENT_TYPE_UNSPECIFIED = 0;
-  ALL = 1;
-  FULL_SCHOLARSHIP = 2;
-  SELF_FUNDED = 3;
-}
-
 // CreateDeductionRuleRequest represents a request to create a deduction rule
 message CreateDeductionRuleRequest {
   string rule_name = 1;
@@ -57,9 +38,9 @@ message CreateDeductionRuleRequest {
   double default_amount = 3;
   double min_amount = 4;
   double max_amount = 5;
-  string frequency = 6; // "Monthly", "Annual", "OneTime"
+  string frequency = 6;
   bool is_mandatory = 7;
-  string applicable_to = 8; // "All", "FullScholarship", "SelfFunded"
+  string applicable_to = 8;
   int32 priority = 9;
   string description = 10;
 }
@@ -77,9 +58,8 @@ message DeductionRuleResponse {
   string applicable_to = 9;
   int32 priority = 10;
   string description = 11;
-  bool is_active = 12;
-  int64 created_at = 13; // Unix timestamp
-  int64 modified_at = 14; // Unix timestamp
+  int64 created_at = 12; // Unix timestamp
+  int64 modified_at = 13; // Unix timestamp
 }
 
 // GetDeductionRuleRequest represents a request to get a deduction rule
@@ -89,8 +69,8 @@ message GetDeductionRuleRequest {
 
 // ListDeductionRulesRequest represents a request to list deduction rules
 message ListDeductionRulesRequest {
-  string applicable_to = 1; // Optional filter
-  bool is_active = 2;
+  string deduction_type = 1;
+  string frequency = 2;
   int32 limit = 3;
   int32 offset = 4;
 }
@@ -101,42 +81,45 @@ message DeductionRulesResponse {
   int32 total = 2;
 }
 
+// DeductionDetail represents a single deduction
+message DeductionDetail {
+  string rule_id = 1;
+  string rule_name = 2;
+  string deduction_type = 3;
+  double amount = 4;
+  string description = 5;
+  bool is_optional = 6;
+}
+
 // ApplyDeductionsRequest represents a request to apply deductions to a stipend
 message ApplyDeductionsRequest {
-  string student_id = 1;
-  string stipend_id = 2;
-  string stipend_type = 3;
-  double base_amount = 4;
-  repeated string deduction_rule_ids = 5; // Optional: specific rules to apply
+  string stipend_id = 1;
+  string student_id = 2;
+  double base_amount = 3;
+}
+
+// DeductionsResponse represents the result of applying deductions
+message DeductionsResponse {
+  double base_amount = 1;
+  double total_deductions = 2;
+  double net_amount = 3;
+  repeated DeductionDetail deductions = 4;
 }
 
 // CreateDeductionRequest represents a request to create a deduction
 message CreateDeductionRequest {
-  string student_id = 1;
-  string deduction_rule_id = 2;
-  string stipend_id = 3;
-  double amount = 4;
-  string deduction_type = 5;
-  string description = 6;
+  string stipend_id = 1;
+  string rule_id = 2;
+  double amount = 3;
 }
 
-// DeductionResponse represents a deduction
+// DeductionResponse represents a deduction record
 message DeductionResponse {
   string id = 1;
-  string student_id = 2;
-  string deduction_rule_id = 3;
-  string stipend_id = 4;
-  double amount = 5;
-  string deduction_type = 6;
-  string description = 7;
-  int64 deduction_date = 8; // Unix timestamp
-  string processing_status = 9;
-  string approved_by = 10; // UUID
-  int64 approval_date = 11; // Unix timestamp
-  string rejection_reason = 12;
-  string transaction_id = 13;
-  int64 created_at = 14; // Unix timestamp
-  int64 modified_at = 15; // Unix timestamp
+  string stipend_id = 2;
+  string rule_id = 3;
+  double amount = 4;
+  int64 created_at = 5; // Unix timestamp
 }
 
 // GetDeductionRequest represents a request to get a deduction
@@ -144,23 +127,14 @@ message GetDeductionRequest {
   string deduction_id = 1;
 }
 
-// GetStipendDeductionsRequest represents a request to get deductions for a stipend
+// GetStipendDeductionsRequest represents a request to get all deductions for a stipend
 message GetStipendDeductionsRequest {
   string stipend_id = 1;
-  int32 limit = 2;
-  int32 offset = 3;
 }
 
-// GetStudentDeductionsRequest represents a request to get deductions for a student
+// GetStudentDeductionsRequest represents a request to get all deductions for a student
 message GetStudentDeductionsRequest {
   string student_id = 1;
   int32 limit = 2;
   int32 offset = 3;
-}
-
-// DeductionsResponse represents a collection of deductions
-message DeductionsResponse {
-  repeated DeductionResponse deductions = 1;
-  double total_amount = 2;
-  int32 total = 3;
 }

@@ -636,6 +636,290 @@ curl -X PATCH http://localhost:8084/api/stipends/f47ac10b-58cc-4372-a567-0e02b2c
 
 ---
 
+## Money Transfer Endpoints
+
+### 1. Initiate Transfer
+
+Initiates a money transfer for a stipend to the student's bank account.
+
+**Endpoint**: `POST /transfers/initiate`
+
+**Request Body**:
+
+```json
+{
+  "stipend_id": "string (UUID)",
+  "payment_method": "string (BANK_TRANSFER|E_PAYMENT)"
+}
+```
+
+**Response** (201 Created):
+
+```json
+{
+  "id": "string (UUID - Transaction ID)",
+  "stipend_id": "string (UUID)",
+  "student_id": "string (UUID)",
+  "amount": "number",
+  "status": "string (PENDING|PROCESSING|SUCCESS|FAILED|CANCELLED)",
+  "reference_number": "string (empty initially)",
+  "error_message": "string (empty if success)",
+  "payment_method": "string",
+  "destination_account": "string",
+  "destination_bank": "string",
+  "initiated_at": "string (ISO8601)",
+  "processed_at": "string (ISO8601, optional)",
+  "completed_at": "string (ISO8601, optional)"
+}
+```
+
+**Example**:
+
+```bash
+curl -X POST http://localhost:8084/api/transfers/initiate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "stipend_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "payment_method": "BANK_TRANSFER"
+  }'
+```
+
+---
+
+### 2. Process Transfer
+
+Processes a pending transfer by calling the payment gateway.
+
+**Endpoint**: `POST /transfers/{transactionID}/process`
+
+**Response** (200 OK):
+
+```json
+{
+  "id": "string (UUID)",
+  "status": "string (PROCESSING|SUCCESS|FAILED)",
+  "reference_number": "string (populated on success)",
+  "error_message": "string (populated on failure)",
+  "completed_at": "string (ISO8601, populated on success)",
+  ...
+}
+```
+
+**Example**:
+
+```bash
+curl -X POST http://localhost:8084/api/transfers/a1b2c3d4-e5f6-47a8-b9c0-d1e2f3a4b5c6/process
+```
+
+---
+
+### 3. Get Transfer Status
+
+Retrieves the current status of a transfer.
+
+**Endpoint**: `GET /transfers/{transactionID}/status`
+
+**Response** (200 OK):
+
+```json
+{
+  "id": "string (UUID)",
+  "stipend_id": "string (UUID)",
+  "student_id": "string (UUID)",
+  "amount": "number",
+  "status": "string",
+  "reference_number": "string",
+  "error_message": "string",
+  "payment_method": "string",
+  "destination_account": "string",
+  "destination_bank": "string",
+  "initiated_at": "string (ISO8601)",
+  "processed_at": "string (ISO8601)",
+  "completed_at": "string (ISO8601)"
+}
+```
+
+**Example**:
+
+```bash
+curl -X GET http://localhost:8084/api/transfers/a1b2c3d4-e5f6-47a8-b9c0-d1e2f3a4b5c6/status
+```
+
+---
+
+### 4. Get Transactions by Stipend
+
+Retrieves all transactions (transfers) for a specific stipend.
+
+**Endpoint**: `GET /stipends/{stipendID}/transactions`
+
+**Response** (200 OK):
+
+```json
+[
+  {
+    "id": "string (UUID)",
+    "stipend_id": "string (UUID)",
+    "student_id": "string (UUID)",
+    "amount": "number",
+    "status": "string",
+    ...
+  }
+]
+```
+
+**Example**:
+
+```bash
+curl -X GET http://localhost:8084/api/stipends/f47ac10b-58cc-4372-a567-0e02b2c3d479/transactions
+```
+
+---
+
+### 5. Get Transactions by Student
+
+Retrieves all transactions for a specific student.
+
+**Endpoint**: `GET /students/{studentID}/transactions`
+
+**Response** (200 OK):
+
+```json
+[
+  {
+    "id": "string (UUID)",
+    "stipend_id": "string (UUID)",
+    "student_id": "string (UUID)",
+    "amount": "number",
+    "status": "string",
+    ...
+  }
+]
+```
+
+**Example**:
+
+```bash
+curl -X GET http://localhost:8084/api/students/550e8400-e29b-41d4-a716-446655440000/transactions
+```
+
+---
+
+### 6. Cancel Transfer
+
+Cancels a pending or processing transfer.
+
+**Endpoint**: `POST /transfers/{transactionID}/cancel`
+
+**Request Body**:
+
+```json
+{
+  "reason": "string (cancellation reason)"
+}
+```
+
+**Response** (200 OK):
+
+```json
+{
+  "id": "string (UUID)",
+  "status": "CANCELLED",
+  "error_message": "string",
+  ...
+}
+```
+
+**Example**:
+
+```bash
+curl -X POST http://localhost:8084/api/transfers/a1b2c3d4-e5f6-47a8-b9c0-d1e2f3a4b5c6/cancel \
+  -H "Content-Type: application/json" \
+  -d '{
+    "reason": "Student requested cancellation"
+  }'
+```
+
+---
+
+### 7. Retry Failed Transfer
+
+Retries a failed transfer.
+
+**Endpoint**: `POST /transfers/{transactionID}/retry`
+
+**Response** (200 OK):
+
+```json
+{
+  "id": "string (UUID)",
+  "status": "string (PROCESSING|SUCCESS|FAILED)",
+  "reference_number": "string (populated on success)",
+  ...
+}
+```
+
+**Example**:
+
+```bash
+curl -X POST http://localhost:8084/api/transfers/a1b2c3d4-e5f6-47a8-b9c0-d1e2f3a4b5c6/retry
+```
+
+---
+
+## Transfer Status Codes
+
+- `PENDING`: Transfer initiated but not yet processed
+- `PROCESSING`: Transfer is being processed by payment gateway
+- `SUCCESS`: Transfer completed successfully
+- `FAILED`: Transfer failed during processing
+- `CANCELLED`: Transfer was cancelled by user or system
+
+---
+
+## Complete Transfer Workflow Example
+
+```bash
+# 1. Calculate and create a stipend
+curl -X POST http://localhost:8084/api/stipends/calculate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "student_id": "550e8400-e29b-41d4-a716-446655440000",
+    "stipend_type": "full-scholarship",
+    "amount": 50000.00
+  }'
+
+# 2. Create the stipend record with net amount
+curl -X POST http://localhost:8084/api/stipends \
+  -H "Content-Type: application/json" \
+  -d '{
+    "student_id": "550e8400-e29b-41d4-a716-446655440000",
+    "stipend_type": "full-scholarship",
+    "amount": 46500.00,
+    "payment_method": "Bank_transfer",
+    "journal_number": "JN-FS-001-2024"
+  }'
+
+# 3. Initiate the transfer
+curl -X POST http://localhost:8084/api/transfers/initiate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "stipend_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "payment_method": "BANK_TRANSFER"
+  }'
+
+# 4. Process the transfer (call payment gateway)
+curl -X POST http://localhost:8084/api/transfers/a1b2c3d4-e5f6-47a8-b9c0-d1e2f3a4b5c6/process
+
+# 5. Check transfer status
+curl -X GET http://localhost:8084/api/transfers/a1b2c3d4-e5f6-47a8-b9c0-d1e2f3a4b5c6/status
+
+# 6. View all student transactions
+curl -X GET http://localhost:8084/api/students/550e8400-e29b-41d4-a716-446655440000/transactions
+```
+
+---
+
 ## Pagination
 
 Pagination is supported on endpoints that return lists.

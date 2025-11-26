@@ -40,7 +40,7 @@ func main() {
 
 	grpcPort := os.Getenv("GRPC_PORT")
 	if grpcPort == "" {
-		grpcPort = "50051"
+		grpcPort = "50052"
 	}
 
 	// Start gRPC and REST servers in parallel
@@ -115,6 +115,22 @@ func startRESTServer(port string) error {
 	deductionHandler := handlers.NewDeductionHandler()
 	log.Println("DEBUG: Deduction handler initialized successfully")
 
+	log.Println("DEBUG: Initializing transfer handler...")
+	transferHandler := handlers.NewTransferHandler()
+	log.Println("DEBUG: Transfer handler initialized successfully")
+
+	log.Println("DEBUG: Initializing search handler...")
+	searchHandler := handlers.NewSearchHandler()
+	log.Println("DEBUG: Search handler initialized successfully")
+
+	log.Println("DEBUG: Initializing report handler...")
+	reportHandler := handlers.NewReportHandler()
+	log.Println("DEBUG: Report handler initialized successfully")
+
+	log.Println("DEBUG: Initializing audit handler...")
+	auditHandler := handlers.NewAuditHandler()
+	log.Println("DEBUG: Audit handler initialized successfully")
+
 	// API Routes
 	log.Println("DEBUG: Registering API routes...")
 	r.Route("/api", func(r chi.Router) {
@@ -125,15 +141,42 @@ func startRESTServer(port string) error {
 		r.Post("/stipends/calculate/annual", stipendHandler.CalculateAnnualStipend)
 		r.Get("/stipends/{stipendID}", stipendHandler.GetStipend)
 		r.Get("/stipends/{stipendID}/deductions", stipendHandler.GetStipendDeductions)
+		r.Get("/stipends/{stipendID}/transactions", transferHandler.GetTransactionsByStipend)
 		r.Patch("/stipends/{stipendID}/payment-status", stipendHandler.UpdateStipendPaymentStatus)
 
 		// Student stipends endpoint
 		r.Get("/students/{studentID}/stipends", stipendHandler.GetStudentStipends)
+		r.Get("/students/{studentID}/transactions", transferHandler.GetTransactionsByStudent)
 
 		// Deduction rule endpoints
 		r.Post("/deduction-rules", deductionHandler.CreateDeductionRule)
 		r.Get("/deduction-rules", deductionHandler.ListDeductionRules)
 		r.Get("/deduction-rules/{ruleID}", deductionHandler.GetDeductionRule)
+
+		// Money Transfer endpoints
+		r.Post("/transfers/initiate", transferHandler.InitiateTransfer)
+		r.Post("/transfers/{transactionID}/process", transferHandler.ProcessTransfer)
+		r.Get("/transfers/{transactionID}/status", transferHandler.GetTransferStatus)
+		r.Post("/transfers/{transactionID}/cancel", transferHandler.CancelTransfer)
+		r.Post("/transfers/{transactionID}/retry", transferHandler.RetryFailedTransfer)
+
+		// Search endpoints
+		r.Get("/search/stipends", searchHandler.SearchStipends)
+		r.Get("/search/deduction-rules", searchHandler.SearchDeductionRules)
+		r.Get("/search/transactions", searchHandler.SearchTransactions)
+
+		// Report endpoints
+		r.Get("/reports/disbursement", reportHandler.GetDisbursementReport)
+		r.Get("/reports/deductions", reportHandler.GetDeductionReport)
+		r.Get("/reports/transactions", reportHandler.GetTransactionReport)
+		r.Get("/reports/export/stipends", reportHandler.ExportStipendsCsv)
+		r.Get("/reports/export/deductions", reportHandler.ExportDeductionsCsv)
+		r.Get("/reports/export/transactions", reportHandler.ExportTransactionsCsv)
+
+		// Audit log endpoints
+		r.Get("/audit-logs", auditHandler.GetAuditLogs)
+		r.Get("/audit-logs/{entity_type}/{entity_id}", auditHandler.GetAuditLogsByEntity)
+		r.Get("/audit-logs/officer/{officer}", auditHandler.GetAuditLogsByOfficer)
 	})
 	log.Println("DEBUG: API routes registered successfully")
 

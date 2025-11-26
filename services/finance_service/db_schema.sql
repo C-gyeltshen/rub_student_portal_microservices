@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS stipends(
     payment_status VARCHAR(50) DEFAULT 'Pending', -- Pending, Processed, Failed
     payment_method VARCHAR(50), -- Bank_transfer, E-payment
     journal_number TEXT NOT NULL UNIQUE,
-    transaction_id UUID REFERENCES transaction(id) ON DELETE SET NULL,
+    transaction_id UUID REFERENCES transactions(id) ON DELETE SET NULL,
     notes TEXT,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     modified_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
@@ -57,7 +57,30 @@ CREATE TABLE IF NOT EXISTS deductions(
     approved_by UUID REFERENCES users(id) ON DELETE SET NULL,
     approval_date TIMESTAMPTZ,
     rejection_reason TEXT,
-    transaction_id UUID REFERENCES transaction(id) ON DELETE SET NULL,
+    transaction_id UUID REFERENCES transactions(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    modified_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Transactions Table
+-- Records money transfer transactions for stipend distribution
+CREATE TABLE IF NOT EXISTS transactions(
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    stipend_id UUID NOT NULL REFERENCES stipends(id) ON DELETE CASCADE,
+    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    amount DECIMAL(10, 2) NOT NULL CHECK (amount > 0),
+    source_account VARCHAR(255), -- College/Institution account
+    destination_account VARCHAR(255) NOT NULL, -- Student's account
+    destination_bank VARCHAR(255),
+    transaction_type VARCHAR(50) DEFAULT 'STIPEND', -- STIPEND, REFUND, etc
+    status VARCHAR(50) DEFAULT 'PENDING', -- PENDING, PROCESSING, SUCCESS, FAILED, CANCELLED
+    payment_method VARCHAR(50), -- BANK_TRANSFER, E_PAYMENT, etc
+    reference_number VARCHAR(255) UNIQUE, -- Unique reference from payment gateway
+    error_message TEXT, -- Error details if transaction failed
+    remarks TEXT,
+    initiated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    processed_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     modified_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -77,3 +100,8 @@ CREATE INDEX IF NOT EXISTS idx_deductions_deduction_rule_id ON deductions(deduct
 CREATE INDEX IF NOT EXISTS idx_deduction_rules_rule_name ON deduction_rules(rule_name);
 CREATE INDEX IF NOT EXISTS idx_deduction_rules_is_active ON deduction_rules(is_active);
 CREATE INDEX IF NOT EXISTS idx_deduction_rules_deduction_type ON deduction_rules(deduction_type);
+
+CREATE INDEX IF NOT EXISTS idx_transactions_student_id ON transactions(student_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_stipend_id ON transactions(stipend_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_status ON transactions(status);
+CREATE INDEX IF NOT EXISTS idx_transactions_reference_number ON transactions(reference_number);

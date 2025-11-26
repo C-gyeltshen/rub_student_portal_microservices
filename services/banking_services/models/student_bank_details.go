@@ -7,11 +7,11 @@ import (
 )
 
 type StudentBankDetails struct {
-	gorm.Model
-	StudentID         int            `json:"student_id"`
-	BankID            uint           `json:"bank_id"` // Must be uint to match Bank.ID type
-	AccountNumber     string         `json:"account_number"`
-	AccountHolderName string         `json:"account_holder_name"`
+	ID                string    `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	StudentID         string    `gorm:"type:uuid" json:"student_id"`
+	BankID            string    `gorm:"type:uuid" json:"bank_id"`
+	AccountNumber     string    `json:"account_number"`
+	AccountHolderName string    `json:"account_holder_name"`
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	DeletedAt         gorm.DeletedAt `gorm:"index"`
