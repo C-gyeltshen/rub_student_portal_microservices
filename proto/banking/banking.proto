@@ -1,0 +1,164 @@
+// proto/banking/banking.proto
+syntax = "proto3";
+
+package banking;
+
+option go_package = "github.com/yourusername/rub-student-portal/proto/banking";
+
+import "google/protobuf/timestamp.proto";
+
+service BankingService {
+  // Bank CRUD operations
+  rpc GetBank(GetBankRequest) returns (GetBankResponse);
+  rpc ListBanks(ListBanksRequest) returns (ListBanksResponse);
+  rpc CreateBank(CreateBankRequest) returns (CreateBankResponse);
+  rpc UpdateBank(UpdateBankRequest) returns (UpdateBankResponse);
+  rpc DeleteBank(DeleteBankRequest) returns (DeleteBankResponse);
+  
+  // Student Bank Details operations
+  rpc GetStudentBankDetails(GetStudentBankDetailsRequest) returns (GetStudentBankDetailsResponse);
+  rpc GetStudentBankDetailsByStudentId(GetStudentBankDetailsByStudentIdRequest) returns (GetStudentBankDetailsResponse);
+  rpc CreateStudentBankDetails(CreateStudentBankDetailsRequest) returns (CreateStudentBankDetailsResponse);
+  rpc UpdateStudentBankDetails(UpdateStudentBankDetailsRequest) returns (UpdateStudentBankDetailsResponse);
+  rpc DeleteStudentBankDetails(DeleteStudentBankDetailsRequest) returns (DeleteStudentBankDetailsResponse);
+  
+  // Bulk operations for stipend processing
+  rpc GetStudentsBankDetails(GetStudentsBankDetailsRequest) returns (GetStudentsBankDetailsResponse);
+  rpc ValidateBankAccount(ValidateBankAccountRequest) returns (ValidateBankAccountResponse);
+}
+
+message Bank {
+  string id = 1;
+  string name = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp modified_at = 4;
+}
+
+message StudentBankDetails {
+  string id = 1;
+  string student_id = 2;
+  string bank_id = 3;
+  string account_number = 4;
+  string account_holder_name = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp modified_at = 7;
+  Bank bank = 8; // populated bank details
+}
+
+// Bank operations
+message GetBankRequest {
+  string id = 1;
+}
+
+message GetBankResponse {
+  Bank bank = 1;
+  string error = 2;
+}
+
+message ListBanksRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message ListBanksResponse {
+  repeated Bank banks = 1;
+  int32 total = 2;
+  string error = 3;
+}
+
+message CreateBankRequest {
+  string name = 1;
+}
+
+message CreateBankResponse {
+  Bank bank = 1;
+  string error = 2;
+}
+
+message UpdateBankRequest {
+  string id = 1;
+  string name = 2;
+}
+
+message UpdateBankResponse {
+  Bank bank = 1;
+  string error = 2;
+}
+
+message DeleteBankRequest {
+  string id = 1;
+}
+
+message DeleteBankResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+// Student Bank Details operations
+message GetStudentBankDetailsRequest {
+  string id = 1;
+}
+
+message GetStudentBankDetailsByStudentIdRequest {
+  string student_id = 1;
+}
+
+message GetStudentBankDetailsResponse {
+  StudentBankDetails details = 1;
+  string error = 2;
+}
+
+message CreateStudentBankDetailsRequest {
+  string student_id = 1;
+  string bank_id = 2;
+  string account_number = 3;
+  string account_holder_name = 4;
+}
+
+message CreateStudentBankDetailsResponse {
+  StudentBankDetails details = 1;
+  string error = 2;
+}
+
+message UpdateStudentBankDetailsRequest {
+  string id = 1;
+  string student_id = 2;
+  string bank_id = 3;
+  string account_number = 4;
+  string account_holder_name = 5;
+}
+
+message UpdateStudentBankDetailsResponse {
+  StudentBankDetails details = 1;
+  string error = 2;
+}
+
+message DeleteStudentBankDetailsRequest {
+  string id = 1;
+}
+
+message DeleteStudentBankDetailsResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+// Bulk operations
+message GetStudentsBankDetailsRequest {
+  repeated string student_ids = 1;
+}
+
+message GetStudentsBankDetailsResponse {
+  repeated StudentBankDetails details = 1;
+  string error = 2;
+}
+
+message ValidateBankAccountRequest {
+  string student_id = 1;
+  string account_number = 2;
+}
+
+message ValidateBankAccountResponse {
+  bool is_valid = 1;
+  StudentBankDetails details = 2;
+  string error = 3;
+}

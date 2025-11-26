@@ -45,7 +45,7 @@ CREATE TABLE student_bank_details(
     student_id UUID REFERENCES students(id), 
     bank_id UUID REFERENCES banks(ID),
     account_number INT NOT NULL UNIQUE,
-    account_holder_name TEXT NOT NULL,
+    account_holder_name TEXT NOT NULL, s
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     modified_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
