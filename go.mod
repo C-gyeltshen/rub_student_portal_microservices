@@ -1,12 +1,12 @@
 module github.com/yourusername/rub-student-portal
 
-go 1.21
-
+go 1.24.0
 
 toolchain go1.24.10
+
 require (
-    google.golang.org/grpc v1.60.0
-    google.golang.org/protobuf v1.32.0
+	google.golang.org/grpc v1.77.0
+	google.golang.org/protobuf v1.36.10
 )
 
 require (

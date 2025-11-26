@@ -1,13 +1,13 @@
 package main
 
 import (
-	"log"
-	"net/http"
-	"os"
 	"banking_services/database"
 	"banking_services/handlers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"log"
+	"net/http"
+	"os"
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
-	// Bank endpoints	
+	// Bank endpoints
 	r.Get("/banks", handlers.GetBanks)
 	r.Post("/banks", handlers.CreateBank)
 	r.Get("/banks/{id}", handlers.GetBankById)
