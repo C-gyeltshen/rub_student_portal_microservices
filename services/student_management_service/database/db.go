@@ -71,16 +71,8 @@ func Connect() error {
     sqlDB.SetMaxOpenConns(100)          // Maximum number of open connections
     sqlDB.SetConnMaxLifetime(time.Hour) // Maximum lifetime of a connection
 
-    // 6. Drop and recreate ALL tables to ensure clean schema
-    log.Println("Dropping existing tables for clean migration...")
-    DB.Exec(`DROP TABLE IF EXISTS stipend_histories CASCADE;`)
-    DB.Exec(`DROP TABLE IF EXISTS stipend_allocations CASCADE;`)
-    DB.Exec(`DROP TABLE IF EXISTS students CASCADE;`)
-    DB.Exec(`DROP TABLE IF EXISTS programs CASCADE;`)
-    DB.Exec(`DROP TABLE IF EXISTS colleges CASCADE;`)
-
-    // AutoMigrate the models
-    // GORM will create the tables based on your structs
+    // 6. AutoMigrate the models
+    // GORM will create or update the tables based on your structs
     // Order matters: Create tables that are referenced by foreign keys first
     log.Println("Running AutoMigrate for colleges, programs, and students...")
     err = DB.AutoMigrate(
@@ -92,10 +84,15 @@ func Connect() error {
         log.Printf("Error running AutoMigrate: %v", err)
         return err
     }
+
+    // Create stipend tables if they don't exist
+    // Drop existing tables first to ensure clean schema (only if they exist)
+    DB.Exec(`DROP TABLE IF EXISTS stipend_histories CASCADE;`)
+    DB.Exec(`DROP TABLE IF EXISTS stipend_allocations CASCADE;`)
     
     // Create stipend_allocations table
     DB.Exec(`
-        CREATE TABLE stipend_allocations (
+        CREATE TABLE IF NOT EXISTS stipend_allocations (
             id SERIAL PRIMARY KEY,
             allocation_id VARCHAR(255) UNIQUE NOT NULL,
             student_id INTEGER NOT NULL,
@@ -116,7 +113,7 @@ func Connect() error {
 
     // Create stipend_histories table
     DB.Exec(`
-        CREATE TABLE stipend_histories (
+        CREATE TABLE IF NOT EXISTS stipend_histories (
             id SERIAL PRIMARY KEY,
             transaction_id VARCHAR(255) UNIQUE NOT NULL,
             student_id INTEGER NOT NULL,
