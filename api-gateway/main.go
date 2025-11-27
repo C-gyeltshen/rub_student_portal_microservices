@@ -22,8 +22,14 @@ func main() {
 		log.Fatalf("Failed to initialize Firebase: %v", err)
 	}
 
+	// Get Firebase Auth client
+	authClient := config.GetAuthClient()
+	if authClient == nil {
+		log.Fatalf("Failed to get Firebase Auth client")
+	}
+
 	r := chi.NewRouter()
-	router.SetupRoutes(r)
+	router.SetupRoutes(r, authClient)
 
 	log.Println("API Gateway running on port 8080")
 	log.Println("Firebase authentication enabled")

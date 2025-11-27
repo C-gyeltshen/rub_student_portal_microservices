@@ -8,6 +8,8 @@ require (
 	google.golang.org/api v0.247.0
 )
 
+require github.com/go-chi/cors v1.2.2
+
 require (
 	cel.dev/expr v0.24.0 // indirect
 	cloud.google.com/go v0.121.6 // indirect
