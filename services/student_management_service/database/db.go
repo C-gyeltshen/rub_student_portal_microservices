@@ -71,9 +71,18 @@ func Connect() error {
     sqlDB.SetMaxOpenConns(100)          // Maximum number of open connections
     sqlDB.SetConnMaxLifetime(time.Hour) // Maximum lifetime of a connection
 
-    // 6. AutoMigrate the models
-    // GORM will create or update the tables based on your structs
+    // 6. Drop and recreate ALL tables to ensure clean schema
+    log.Println("Dropping existing tables for clean migration...")
+    DB.Exec(`DROP TABLE IF EXISTS stipend_histories CASCADE;`)
+    DB.Exec(`DROP TABLE IF EXISTS stipend_allocations CASCADE;`)
+    DB.Exec(`DROP TABLE IF EXISTS students CASCADE;`)
+    DB.Exec(`DROP TABLE IF EXISTS programs CASCADE;`)
+    DB.Exec(`DROP TABLE IF EXISTS colleges CASCADE;`)
+
+    // AutoMigrate the models
+    // GORM will create the tables based on your structs
     // Order matters: Create tables that are referenced by foreign keys first
+    log.Println("Running AutoMigrate for colleges, programs, and students...")
     err = DB.AutoMigrate(
         &models.College{},
         &models.Program{},
@@ -83,10 +92,10 @@ func Connect() error {
         log.Printf("Error running AutoMigrate: %v", err)
         return err
     }
-
-    // Create stipend tables manually to avoid circular dependency issues
+    
+    // Create stipend_allocations table
     DB.Exec(`
-        CREATE TABLE IF NOT EXISTS stipend_allocations (
+        CREATE TABLE stipend_allocations (
             id SERIAL PRIMARY KEY,
             allocation_id VARCHAR(255) UNIQUE NOT NULL,
             student_id INTEGER NOT NULL,
@@ -101,10 +110,13 @@ func Connect() error {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             deleted_at TIMESTAMP,
-            FOREIGN KEY (student_id) REFERENCES students(id)
+            FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
         );
+    `)
 
-        CREATE TABLE IF NOT EXISTS stipend_histories (
+    // Create stipend_histories table
+    DB.Exec(`
+        CREATE TABLE stipend_histories (
             id SERIAL PRIMARY KEY,
             transaction_id VARCHAR(255) UNIQUE NOT NULL,
             student_id INTEGER NOT NULL,
@@ -118,9 +130,23 @@ func Connect() error {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             deleted_at TIMESTAMP,
-            FOREIGN KEY (student_id) REFERENCES students(id),
-            FOREIGN KEY (allocation_id) REFERENCES stipend_allocations(id)
+            FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+            FOREIGN KEY (allocation_id) REFERENCES stipend_allocations(id) ON DELETE SET NULL
         );
+    `)
+
+    // Create indexes
+    DB.Exec(`
+        CREATE INDEX IF NOT EXISTS idx_stipend_allocations_student_id ON stipend_allocations(student_id);
+        CREATE INDEX IF NOT EXISTS idx_stipend_allocations_status ON stipend_allocations(status);
+        CREATE INDEX IF NOT EXISTS idx_stipend_allocations_allocation_id ON stipend_allocations(allocation_id);
+        CREATE INDEX IF NOT EXISTS idx_stipend_allocations_deleted_at ON stipend_allocations(deleted_at);
+        
+        CREATE INDEX IF NOT EXISTS idx_stipend_histories_student_id ON stipend_histories(student_id);
+        CREATE INDEX IF NOT EXISTS idx_stipend_histories_allocation_id ON stipend_histories(allocation_id);
+        CREATE INDEX IF NOT EXISTS idx_stipend_histories_transaction_id ON stipend_histories(transaction_id);
+        CREATE INDEX IF NOT EXISTS idx_stipend_histories_transaction_status ON stipend_histories(transaction_status);
+        CREATE INDEX IF NOT EXISTS idx_stipend_histories_deleted_at ON stipend_histories(deleted_at);
     `)
 
     log.Println("Database connected and all models migrated successfully.")

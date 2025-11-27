@@ -1,25 +1,6 @@
 services:
-  # PostgreSQL Database (shared server, separate databases per service)
-  postgres:
-    image: postgres:15-alpine
-    container_name: rub-postgres-db
-    environment:
-      POSTGRES_USER: rubadmin
-      POSTGRES_PASSWORD: rubpassword
-      POSTGRES_DB: postgres # Default database
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init-dbs.sql:/docker-entrypoint-initdb.d/init-dbs.sql
-    networks:
-      - rub-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rubadmin"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
+  # PostgreSQL Database removed - using cloud databases
+  # See .env files in each service for cloud database URLs
 
   # User Services
   user_services:
@@ -32,13 +13,9 @@ services:
     environment:
       PORT: "8082"
       GRPC_PORT: "50052"
-      DATABASE_URL: "postgresql://rubadmin:rubpassword@postgres:5432/user_service_db?sslmode=disable"
     ports:
       - "8082:8082"
       - "50052:50052"
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - rub-network
     restart: unless-stopped
@@ -54,13 +31,9 @@ services:
     environment:
       PORT: "8083"
       GRPC_PORT: "50053"
-      DATABASE_URL: "postgresql://rubadmin:rubpassword@postgres:5432/banking_service_db?sslmode=disable"
     ports:
       - "8083:8083"
       - "50053:50053"
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - rub-network
     restart: unless-stopped
@@ -76,14 +49,10 @@ services:
     environment:
       PORT: "8085"
       GRPC_PORT: "50055"
-      DATABASE_URL: "postgresql://rubadmin:rubpassword@postgres:5432/finance_service_db?sslmode=disable"
       STUDENT_GRPC_URL: "student_management_service:50054"
     ports:
       - "8085:8085"
       - "50055:50055"
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - rub-network
     restart: unless-stopped
@@ -99,7 +68,6 @@ services:
     environment:
       PORT: "8084"
       GRPC_PORT: "50054"
-      DATABASE_URL: "postgresql://rubadmin:rubpassword@postgres:5432/student_service_db?sslmode=disable"
       USER_GRPC_URL: "user_services:50052"
       BANKING_GRPC_URL: "banking_services:50053"
       FINANCE_GRPC_URL: "finance_services:50055"
