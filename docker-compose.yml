@@ -99,6 +99,7 @@ services:
     environment:
       PORT: "8084"
       GRPC_PORT: "50054"
+      DATABASE_URL: "postgresql://rubadmin:rubpassword@postgres:5432/student_service_db?sslmode=disable"
       USER_GRPC_URL: "user_services:50052"
       BANKING_GRPC_URL: "banking_services:50053"
       FINANCE_GRPC_URL: "finance_services:50055"

@@ -21,8 +21,10 @@ RUN mkdir -p pkg/pb && \
     protoc --go_out=pkg/pb --go-grpc_out=pkg/pb -I proto proto/stipend.proto && \
     protoc --go_out=pkg/pb --go-grpc_out=pkg/pb -I proto proto/deduction.proto
 
-# Download Go dependencies using go.work from parent
-RUN go mod tidy && go mod download
+# Download Go dependencies using go.work from parent with retries
+RUN for i in 1 2 3; do \
+    go mod tidy && go mod download && break || sleep 5; \
+    done
 
 # Build the application  
 RUN CGO_ENABLED=0 GOOS=linux go build -o finance_service .

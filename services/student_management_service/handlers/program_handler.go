@@ -76,8 +76,34 @@ func UpdateProgram(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Reload the program with College preloaded
+	if err := database.DB.Preload("College").First(&program, id).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(program)
+}
+
+// DeleteProgram deletes a program
+func DeleteProgram(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var program models.Program
+	if err := database.DB.First(&program, id).Error; err != nil {
+		http.Error(w, "Program not found", http.StatusNotFound)
+		return
+	}
+
+	if err := database.DB.Delete(&program).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Program deleted successfully"})
 }
 
 // ==================== College Handlers ====================
@@ -147,6 +173,32 @@ func UpdateCollege(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Reload the college to get updated data
+	if err := database.DB.First(&college, id).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(college)
+}
+
+// DeleteCollege deletes a college
+func DeleteCollege(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var college models.College
+	if err := database.DB.First(&college, id).Error; err != nil {
+		http.Error(w, "College not found", http.StatusNotFound)
+		return
+	}
+
+	if err := database.DB.Delete(&college).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "College deleted successfully"})
 }

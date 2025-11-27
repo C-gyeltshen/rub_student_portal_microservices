@@ -12,7 +12,7 @@ import (
 // GetStudents retrieves all students
 func GetStudents(w http.ResponseWriter, r *http.Request) {
 	var students []models.Student
-	if err := database.DB.Find(&students).Error; err != nil {
+	if err := database.DB.Preload("Program").Preload("College").Find(&students).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -29,12 +29,18 @@ func CreateStudent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if student.StudentID == "" || student.FirstName == "" || student.LastName == "" || student.Email == "" {
+	if student.RubIDCardNumber == "" || student.Name == "" || student.Email == "" {
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
 
 	if err := database.DB.Create(&student).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Reload the student with Program and College preloaded
+	if err := database.DB.Preload("Program").Preload("College").First(&student, student.ID).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -49,7 +55,7 @@ func GetStudentById(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	var student models.Student
-	if err := database.DB.First(&student, id).Error; err != nil {
+	if err := database.DB.Preload("Program").Preload("College").First(&student, id).Error; err != nil {
 		http.Error(w, "Student not found", http.StatusNotFound)
 		return
 	}
@@ -58,12 +64,12 @@ func GetStudentById(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(student)
 }
 
-// GetStudentByStudentId retrieves a student by their student ID
-func GetStudentByStudentId(w http.ResponseWriter, r *http.Request) {
-	studentId := chi.URLParam(r, "studentId")
+// GetStudentByRubId retrieves a student by their RUB ID card number
+func GetStudentByRubId(w http.ResponseWriter, r *http.Request) {
+	rubId := chi.URLParam(r, "rubId")
 
 	var student models.Student
-	if err := database.DB.Where("student_id = ?", studentId).First(&student).Error; err != nil {
+	if err := database.DB.Preload("Program").Preload("College").Where("rub_id_card_number = ?", rubId).First(&student).Error; err != nil {
 		http.Error(w, "Student not found", http.StatusNotFound)
 		return
 	}
@@ -77,7 +83,7 @@ func GetStudentsByProgram(w http.ResponseWriter, r *http.Request) {
 	programId := chi.URLParam(r, "programId")
 
 	var students []models.Student
-	if err := database.DB.Where("program_id = ?", programId).Find(&students).Error; err != nil {
+	if err := database.DB.Preload("Program").Preload("College").Where("program_id = ?", programId).Find(&students).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -91,21 +97,7 @@ func GetStudentsByCollege(w http.ResponseWriter, r *http.Request) {
 	collegeId := chi.URLParam(r, "collegeId")
 
 	var students []models.Student
-	if err := database.DB.Where("college_id = ?", collegeId).Find(&students).Error; err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(students)
-}
-
-// GetStudentsByStatus retrieves all students with a specific status
-func GetStudentsByStatus(w http.ResponseWriter, r *http.Request) {
-	status := chi.URLParam(r, "status")
-
-	var students []models.Student
-	if err := database.DB.Where("status = ?", status).Find(&students).Error; err != nil {
+	if err := database.DB.Preload("Program").Preload("College").Where("college_id = ?", collegeId).Find(&students).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -124,26 +116,19 @@ func UpdateStudent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var updatedStudent models.Student
-	if err := json.NewDecoder(r.Body).Decode(&updatedStudent); err != nil {
+	var updates models.Student
+	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if updatedStudent.FirstName != "" {
-		student.FirstName = updatedStudent.FirstName
-	}
-	if updatedStudent.LastName != "" {
-		student.LastName = updatedStudent.LastName
-	}
-	if updatedStudent.Email != "" {
-		student.Email = updatedStudent.Email
-	}
-	if updatedStudent.Status != "" {
-		student.Status = updatedStudent.Status
+	if err := database.DB.Model(&student).Updates(updates).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	if err := database.DB.Save(&student).Error; err != nil {
+	// Reload the student with Program and College preloaded
+	if err := database.DB.Preload("Program").Preload("College").First(&student, id).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -172,7 +157,7 @@ func DeleteStudent(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Student deleted successfully"})
 }
 
-// SearchStudents searches students by name, email, or student ID
+// SearchStudents searches students by name, email, or RUB ID card number
 func SearchStudents(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("q")
 	if query == "" {
@@ -182,8 +167,8 @@ func SearchStudents(w http.ResponseWriter, r *http.Request) {
 
 	var students []models.Student
 	searchPattern := "%" + query + "%"
-	if err := database.DB.Where("first_name ILIKE ? OR last_name ILIKE ? OR email ILIKE ? OR student_id ILIKE ?", 
-		searchPattern, searchPattern, searchPattern, searchPattern).Find(&students).Error; err != nil {
+	if err := database.DB.Preload("Program").Preload("College").Where("name ILIKE ? OR email ILIKE ? OR rub_id_card_number ILIKE ?", 
+		searchPattern, searchPattern, searchPattern).Find(&students).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

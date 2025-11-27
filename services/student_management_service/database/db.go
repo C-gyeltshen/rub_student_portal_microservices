@@ -78,7 +78,6 @@ func Connect() error {
         &models.College{},
         &models.Program{},
         &models.Student{},
-        &models.AuditLog{},
     )
     if err != nil {
         log.Printf("Error running AutoMigrate: %v", err)
