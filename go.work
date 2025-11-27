@@ -1,8 +1,8 @@
-go 1.24
+go 1.24.0
 
 use (
-	./services/student_management_service
-	./services/finance_service
-	./services/user_services
 	./services/banking_services
+	./services/finance_service
+	./services/student_management_service
+	./services/user_services
 )

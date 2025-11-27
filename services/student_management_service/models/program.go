@@ -14,7 +14,7 @@ type College struct {
 	Description string `json:"description"`
 	Location    string `json:"location"`
 	IsActive    bool   `json:"is_active" gorm:"default:true"`
-	AllowSelfFinancedStipend bool `json:"allow_self_financed_stipend" gorm:"default:false"` // Whether college allows self-financed students to get stipend
+	AllowSelfFinancedStipend bool `json:"allow_self_financed_stipend" gorm:"default:false"`
 	
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`

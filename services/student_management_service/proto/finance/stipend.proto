@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "./pkg/pb";
+
+// StipendService provides gRPC APIs for stipend calculation and management
+service StipendService {
+  // CalculateStipendWithDeductions calculates stipend amount after applying deductions
+  rpc CalculateStipendWithDeductions(CalculateStipendRequest) returns (CalculationResponse);
+  
+  // CalculateMonthlyStipend calculates monthly stipend (annual / 12) with deductions
+  rpc CalculateMonthlyStipend(CalculateMonthlyStipendRequest) returns (CalculationResponse);
+  
+  // CalculateAnnualStipend calculates annual stipend with deductions
+  rpc CalculateAnnualStipend(CalculateAnnualStipendRequest) returns (CalculationResponse);
+  
+  // CreateStipend creates a new stipend record
+  rpc CreateStipend(CreateStipendRequest) returns (StipendResponse);
+  
+  // GetStipend retrieves a stipend by ID
+  rpc GetStipend(GetStipendRequest) returns (StipendResponse);
+  
+  // GetStudentStipends retrieves all stipends for a student
+  rpc GetStudentStipends(GetStudentStipendsRequest) returns (StudentStipendsResponse);
+  
+  // UpdateStipendPaymentStatus updates the payment status of a stipend
+  rpc UpdateStipendPaymentStatus(UpdateStipendPaymentStatusRequest) returns (StipendResponse);
+}
+
+// CalculateStipendRequest represents a request to calculate stipend with deductions
+message CalculateStipendRequest {
+  string student_id = 1;
+  string stipend_type = 2; // "full-scholarship" or "self-funded"
+  double amount = 3;
+  string payment_method = 4;
+  string journal_number = 5;
+  string notes = 6;
+}
+
+// CalculateMonthlyStipendRequest represents a request to calculate monthly stipend
+message CalculateMonthlyStipendRequest {
+  string student_id = 1;
+  string stipend_type = 2;
+  double annual_amount = 3;
+}
+
+// CalculateAnnualStipendRequest represents a request to calculate annual stipend
+message CalculateAnnualStipendRequest {
+  string student_id = 1;
+  string stipend_type = 2;
+  double amount = 3;
+}
+
+// DeductionDetail represents a single deduction in the calculation
+message DeductionDetail {
+  string rule_id = 1;
+  string rule_name = 2;
+  string deduction_type = 3;
+  double amount = 4;
+  string description = 5;
+  bool is_optional = 6;
+}
+
+// CalculationResponse represents the result of a stipend calculation
+message CalculationResponse {
+  double base_stipend_amount = 1;
+  double total_deductions = 2;
+  double net_stipend_amount = 3;
+  repeated DeductionDetail deductions = 4;
+}
+
+// CreateStipendRequest represents a request to create a stipend
+message CreateStipendRequest {
+  string student_id = 1;
+  string stipend_type = 2;
+  double amount = 3;
+  string payment_method = 4;
+  string journal_number = 5;
+  string notes = 6;
+}
+
+// StipendResponse represents a stipend
+message StipendResponse {
+  string id = 1;
+  string student_id = 2;
+  double amount = 3;
+  string stipend_type = 4;
+  int64 payment_date = 5; // Unix timestamp
+  string payment_status = 6;
+  string payment_method = 7;
+  string journal_number = 8;
+  string notes = 9;
+  int64 created_at = 10; // Unix timestamp
+  int64 modified_at = 11; // Unix timestamp
+}
+
+// GetStipendRequest represents a request to get a stipend
+message GetStipendRequest {
+  string stipend_id = 1;
+}
+
+// GetStudentStipendsRequest represents a request to get all stipends for a student
+message GetStudentStipendsRequest {
+  string student_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+// StudentStipendsResponse represents a collection of stipends for a student
+message StudentStipendsResponse {
+  repeated StipendResponse stipends = 1;
+  int32 total = 2;
+}
+
+// UpdateStipendPaymentStatusRequest represents a request to update payment status
+message UpdateStipendPaymentStatusRequest {
+  string stipend_id = 1;
+  string payment_status = 2; // "Pending", "Processed", "Failed"
+  string payment_date = 3; // ISO8601 format
+}

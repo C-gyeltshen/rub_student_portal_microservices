@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	pb "finance_service/pkg/pb"
+	pb "student_management_service/pb/finance"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

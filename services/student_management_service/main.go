@@ -63,6 +63,22 @@ func startHTTPServer() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	
+	// CORS middleware for frontend integration
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			
+			next.ServeHTTP(w, r)
+		})
+	})
 
 	// ==================== Student Endpoints ====================
 	r.Get("/api/students", handlers.GetStudents)
@@ -102,6 +118,10 @@ func startHTTPServer() {
 	r.Post("/api/stipend/history", handlers.CreateStipendHistory)
 	r.Get("/api/stipend/history/student/{studentId}", handlers.GetStudentStipendHistory)
 
+	// ==================== Finance Service Integration Endpoints ====================
+	r.Post("/api/stipend/calculate", handlers.CalculateStipendWithDeductions)
+	r.Get("/api/students/{studentId}/finance-stipends", handlers.GetStudentFinanceStipends)
+
 	// ==================== Report Endpoints ====================
 	r.Get("/api/reports/students/summary", handlers.GenerateStudentSummary)
 	r.Get("/api/reports/stipend/statistics", handlers.GenerateStipendStatistics)
@@ -119,6 +139,7 @@ func startHTTPServer() {
 	log.Println("  - Programs: /api/programs")
 	log.Println("  - Colleges: /api/colleges")
 	log.Println("  - Stipend: /api/stipend/*")
+	log.Println("  - Finance Integration: /api/stipend/calculate, /api/students/{id}/finance-stipends")
 	log.Println("  - Reports: /api/reports/*")
 	
 	http.ListenAndServe(":"+port, r)

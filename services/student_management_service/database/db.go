@@ -73,18 +73,56 @@ func Connect() error {
 
     // 6. AutoMigrate the models
     // GORM will create or update the tables based on your structs
+    // Order matters: Create tables that are referenced by foreign keys first
     err = DB.AutoMigrate(
-        &models.Student{},
         &models.College{},
         &models.Program{},
-        &models.StipendAllocation{},
-        &models.StipendHistory{},
+        &models.Student{},
         &models.AuditLog{},
     )
     if err != nil {
         log.Printf("Error running AutoMigrate: %v", err)
         return err
     }
+
+    // Create stipend tables manually to avoid circular dependency issues
+    DB.Exec(`
+        CREATE TABLE IF NOT EXISTS stipend_allocations (
+            id SERIAL PRIMARY KEY,
+            allocation_id VARCHAR(255) UNIQUE NOT NULL,
+            student_id INTEGER NOT NULL,
+            amount DECIMAL(10,2) NOT NULL,
+            allocation_date VARCHAR(255),
+            status VARCHAR(50) DEFAULT 'pending',
+            approved_by INTEGER,
+            approval_date VARCHAR(255),
+            semester INTEGER,
+            academic_year VARCHAR(255),
+            remarks TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            deleted_at TIMESTAMP,
+            FOREIGN KEY (student_id) REFERENCES students(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS stipend_histories (
+            id SERIAL PRIMARY KEY,
+            transaction_id VARCHAR(255) UNIQUE NOT NULL,
+            student_id INTEGER NOT NULL,
+            allocation_id INTEGER,
+            amount DECIMAL(10,2) NOT NULL,
+            payment_date VARCHAR(255),
+            transaction_status VARCHAR(50),
+            payment_method VARCHAR(50),
+            bank_reference VARCHAR(255),
+            remarks TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            deleted_at TIMESTAMP,
+            FOREIGN KEY (student_id) REFERENCES students(id),
+            FOREIGN KEY (allocation_id) REFERENCES stipend_allocations(id)
+        );
+    `)
 
     log.Println("Database connected and all models migrated successfully.")
     return nil

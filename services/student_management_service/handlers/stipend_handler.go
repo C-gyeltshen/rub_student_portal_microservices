@@ -1,11 +1,16 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"student_management_service/database"
+	client "student_management_service/grpc/client"
 	"student_management_service/models"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -98,6 +103,36 @@ func CreateStipendAllocation(w http.ResponseWriter, r *http.Request) {
 	if !eligibility.IsEligible {
 		http.Error(w, "Student is not eligible for stipend", http.StatusBadRequest)
 		return
+	}
+
+	// Connect to finance service to calculate stipend with deductions
+	financeClient, err := client.NewFinanceClient()
+	if err != nil {
+		log.Printf("Warning: Could not connect to finance service: %v", err)
+		// Continue without finance service integration
+	} else {
+		defer financeClient.Close()
+
+		// Calculate stipend with deductions using finance service
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		calcResult, err := financeClient.CalculateStipendWithDeductions(
+			ctx,
+			fmt.Sprintf("%d", student.ID),
+			student.FinancingType,
+			allocation.Amount,
+		)
+		if err != nil {
+			log.Printf("Warning: Stipend calculation failed: %v", err)
+		} else {
+			// Update allocation with calculated net amount
+			allocation.Amount = calcResult.NetStipendAmount
+			log.Printf("Stipend calculated: Base=%.2f, Deductions=%.2f, Net=%.2f",
+				calcResult.BaseStipendAmount,
+				calcResult.TotalDeductions,
+				calcResult.NetStipendAmount)
+		}
 	}
 
 	if err := database.DB.Create(&allocation).Error; err != nil {
@@ -243,6 +278,45 @@ func CreateStipendHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get student to determine stipend type
+	var student models.Student
+	if err := database.DB.First(&student, history.StudentID).Error; err != nil {
+		log.Printf("Warning: Could not find student %d: %v", history.StudentID, err)
+	} else {
+		// Also create stipend record in finance service
+		financeClient, err := client.NewFinanceClient()
+		if err != nil {
+			log.Printf("Warning: Could not connect to finance service: %v", err)
+		} else {
+			defer financeClient.Close()
+
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			// Determine stipend type from student financing type
+			stipendType := student.FinancingType
+			if stipendType == "" {
+				stipendType = "scholarship"
+			}
+
+			// Create stipend in finance service
+			_, err = financeClient.CreateStipend(
+				ctx,
+				fmt.Sprintf("%d", history.StudentID),
+				stipendType,
+				history.Amount,
+				history.PaymentMethod,
+				history.BankReference, // Using BankReference as JournalNumber
+				history.Remarks,
+			)
+			if err != nil {
+				log.Printf("Warning: Failed to create stipend in finance service: %v", err)
+			} else {
+				log.Printf("Successfully created stipend in finance service for student %d", history.StudentID)
+			}
+		}
+	}
+
 	if err := database.DB.Create(&history).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -251,4 +325,98 @@ func CreateStipendHistory(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(history)
+}
+
+// ==================== Finance Service Integration Endpoints ====================
+
+// CalculateStipendWithDeductions calculates stipend with deductions via finance service
+func CalculateStipendWithDeductions(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		StudentID   uint    `json:"student_id"`
+		StipendType string  `json:"stipend_type"`
+		Amount      float64 `json:"amount"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Validate student exists
+	var student models.Student
+	if err := database.DB.First(&student, req.StudentID).Error; err != nil {
+		http.Error(w, "Student not found", http.StatusNotFound)
+		return
+	}
+
+	// Use student's financing type if not provided
+	stipendType := req.StipendType
+	if stipendType == "" {
+		stipendType = student.FinancingType
+	}
+
+	// Connect to finance service
+	financeClient, err := client.NewFinanceClient()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to connect to finance service: %v", err), http.StatusServiceUnavailable)
+		return
+	}
+	defer financeClient.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Calculate stipend with deductions
+	result, err := financeClient.CalculateStipendWithDeductions(
+		ctx,
+		fmt.Sprintf("%d", req.StudentID),
+		stipendType,
+		req.Amount,
+	)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Calculation failed: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// GetStudentFinanceStipends retrieves stipends from finance service for a student
+func GetStudentFinanceStipends(w http.ResponseWriter, r *http.Request) {
+	studentID := chi.URLParam(r, "studentId")
+
+	// Validate student exists
+	id, err := strconv.Atoi(studentID)
+	if err != nil {
+		http.Error(w, "Invalid student ID", http.StatusBadRequest)
+		return
+	}
+
+	var student models.Student
+	if err := database.DB.First(&student, id).Error; err != nil {
+		http.Error(w, "Student not found", http.StatusNotFound)
+		return
+	}
+
+	// Connect to finance service
+	financeClient, err := client.NewFinanceClient()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to connect to finance service: %v", err), http.StatusServiceUnavailable)
+		return
+	}
+	defer financeClient.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Get student stipends from finance service
+	result, err := financeClient.GetStudentStipends(ctx, studentID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to get stipends: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
 }
