@@ -177,3 +177,84 @@ func (rh *ReportHandler) ExportTransactionsCsv(w http.ResponseWriter, r *http.Re
 		http.Error(w, fmt.Sprintf("Failed to export CSV: %v", err), http.StatusInternalServerError)
 	}
 }
+
+// ExportStipendsPdf exports stipends to PDF format
+func (rh *ReportHandler) ExportStipendsPdf(w http.ResponseWriter, r *http.Request) {
+	startDateStr := r.URL.Query().Get("start_date")
+	endDateStr := r.URL.Query().Get("end_date")
+
+	var startDate, endDate *time.Time
+
+	if startDateStr != "" {
+		if t, err := time.Parse(time.RFC3339, startDateStr); err == nil {
+			startDate = &t
+		}
+	}
+	if endDateStr != "" {
+		if t, err := time.Parse(time.RFC3339, endDateStr); err == nil {
+			endDate = &t
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", "attachment; filename=stipends.pdf")
+
+	if err := rh.reportService.ExportStipendsToPdf(w, startDate, endDate); err != nil {
+		log.Printf("Error exporting stipends to PDF: %v", err)
+		http.Error(w, fmt.Sprintf("Failed to export PDF: %v", err), http.StatusInternalServerError)
+	}
+}
+
+// ExportDeductionsPdf exports deductions to PDF format
+func (rh *ReportHandler) ExportDeductionsPdf(w http.ResponseWriter, r *http.Request) {
+	startDateStr := r.URL.Query().Get("start_date")
+	endDateStr := r.URL.Query().Get("end_date")
+
+	var startDate, endDate *time.Time
+
+	if startDateStr != "" {
+		if t, err := time.Parse(time.RFC3339, startDateStr); err == nil {
+			startDate = &t
+		}
+	}
+	if endDateStr != "" {
+		if t, err := time.Parse(time.RFC3339, endDateStr); err == nil {
+			endDate = &t
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", "attachment; filename=deductions.pdf")
+
+	if err := rh.reportService.ExportDeductionsToPdf(w, startDate, endDate); err != nil {
+		log.Printf("Error exporting deductions to PDF: %v", err)
+		http.Error(w, fmt.Sprintf("Failed to export PDF: %v", err), http.StatusInternalServerError)
+	}
+}
+
+// ExportTransactionsPdf exports transactions to PDF format
+func (rh *ReportHandler) ExportTransactionsPdf(w http.ResponseWriter, r *http.Request) {
+	startDateStr := r.URL.Query().Get("start_date")
+	endDateStr := r.URL.Query().Get("end_date")
+
+	var startDate, endDate *time.Time
+
+	if startDateStr != "" {
+		if t, err := time.Parse(time.RFC3339, startDateStr); err == nil {
+			startDate = &t
+		}
+	}
+	if endDateStr != "" {
+		if t, err := time.Parse(time.RFC3339, endDateStr); err == nil {
+			endDate = &t
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", "attachment; filename=transactions.pdf")
+
+	if err := rh.reportService.ExportTransactionsToPdf(w, startDate, endDate); err != nil {
+		log.Printf("Error exporting transactions to PDF: %v", err)
+		http.Error(w, fmt.Sprintf("Failed to export PDF: %v", err), http.StatusInternalServerError)
+	}
+}

@@ -172,6 +172,9 @@ func startRESTServer(port string) error {
 		r.Get("/reports/export/stipends", reportHandler.ExportStipendsCsv)
 		r.Get("/reports/export/deductions", reportHandler.ExportDeductionsCsv)
 		r.Get("/reports/export/transactions", reportHandler.ExportTransactionsCsv)
+		r.Get("/reports/export/pdf/stipends", reportHandler.ExportStipendsPdf)
+		r.Get("/reports/export/pdf/deductions", reportHandler.ExportDeductionsPdf)
+		r.Get("/reports/export/pdf/transactions", reportHandler.ExportTransactionsPdf)
 
 		// Audit log endpoints
 		r.Get("/audit-logs", auditHandler.GetAuditLogs)

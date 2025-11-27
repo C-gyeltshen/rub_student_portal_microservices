@@ -7,6 +7,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/go-pdf/fpdf"
 	"gorm.io/gorm"
 )
 
@@ -302,5 +303,242 @@ func (rs *ReportService) ExportTransactionsToCsv(w io.Writer, startDate, endDate
 		}
 	}
 
+	return nil
+}
+
+// ExportStipendsToPdf exports stipends to PDF format
+func (rs *ReportService) ExportStipendsToPdf(w io.Writer, startDate, endDate *time.Time) error {
+	var stipends []models.Stipend
+
+	query := rs.db
+	if startDate != nil && endDate != nil {
+		query = query.Where("created_at BETWEEN ? AND ?", startDate, endDate)
+	}
+
+	if err := query.Find(&stipends).Error; err != nil {
+		return fmt.Errorf("failed to fetch stipends: %w", err)
+	}
+
+	pdf := fpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+	pdf.SetFont("Arial", "B", 16)
+	pdf.Cell(0, 10, "STIPENDS REPORT")
+	pdf.Ln(-1)
+
+	pdf.SetFont("Arial", "", 10)
+	pdf.Cell(0, 10, fmt.Sprintf("Generated: %s", time.Now().Format("2006-01-02 15:04:05")))
+	pdf.Ln(-1)
+
+	if startDate != nil && endDate != nil {
+		pdf.Cell(0, 10, fmt.Sprintf("Period: %s to %s", startDate.Format("2006-01-02"), endDate.Format("2006-01-02")))
+		pdf.Ln(-1)
+	}
+
+	var totalAmount float64
+	for _, s := range stipends {
+		totalAmount += s.Amount
+	}
+
+	pdf.Ln(5)
+	pdf.SetFont("Arial", "B", 11)
+	pdf.Cell(0, 8, "SUMMARY")
+	pdf.Ln(-1)
+	pdf.SetFont("Arial", "", 10)
+	pdf.Cell(0, 8, fmt.Sprintf("Total Stipends: %d", len(stipends)))
+	pdf.Ln(-1)
+	pdf.Cell(0, 8, fmt.Sprintf("Total Amount: Rs. %.2f", totalAmount))
+	pdf.Ln(-1)
+	if len(stipends) > 0 {
+		pdf.Cell(0, 8, fmt.Sprintf("Average Amount: Rs. %.2f", totalAmount/float64(len(stipends))))
+		pdf.Ln(-1)
+	}
+
+	pdf.Ln(10)
+	pdf.SetFont("Arial", "B", 9)
+	pdf.Cell(20, 7, "ID")
+	pdf.Cell(30, 7, "Student ID")
+	pdf.Cell(30, 7, "Amount")
+	pdf.Cell(30, 7, "Type")
+	pdf.Cell(30, 7, "Status")
+	pdf.Cell(20, 7, "Date")
+	pdf.Ln(-1)
+
+	pdf.SetFont("Arial", "", 8)
+	for _, stipend := range stipends {
+		pdf.Cell(20, 6, stipend.ID.String()[:8])
+		pdf.Cell(30, 6, stipend.StudentID.String()[:8])
+		pdf.Cell(30, 6, fmt.Sprintf("%.2f", stipend.Amount))
+		pdf.Cell(30, 6, stipend.StipendType)
+		pdf.Cell(30, 6, stipend.PaymentStatus)
+		pdf.Cell(20, 6, stipend.CreatedAt.Format("06-01-02"))
+		pdf.Ln(-1)
+	}
+
+	pdf.Output(w)
+	return nil
+}
+
+// ExportDeductionsToPdf exports deductions to PDF format
+func (rs *ReportService) ExportDeductionsToPdf(w io.Writer, startDate, endDate *time.Time) error {
+	var deductions []models.Deduction
+
+	query := rs.db
+	if startDate != nil && endDate != nil {
+		query = query.Where("created_at BETWEEN ? AND ?", startDate, endDate)
+	}
+
+	if err := query.Find(&deductions).Error; err != nil {
+		return fmt.Errorf("failed to fetch deductions: %w", err)
+	}
+
+	pdf := fpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+	pdf.SetFont("Arial", "B", 16)
+	pdf.Cell(0, 10, "DEDUCTIONS REPORT")
+	pdf.Ln(-1)
+
+	pdf.SetFont("Arial", "", 10)
+	pdf.Cell(0, 10, fmt.Sprintf("Generated: %s", time.Now().Format("2006-01-02 15:04:05")))
+	pdf.Ln(-1)
+
+	if startDate != nil && endDate != nil {
+		pdf.Cell(0, 10, fmt.Sprintf("Period: %s to %s", startDate.Format("2006-01-02"), endDate.Format("2006-01-02")))
+		pdf.Ln(-1)
+	}
+
+	var totalAmount float64
+	deductionMap := make(map[string]float64)
+
+	for _, d := range deductions {
+		totalAmount += d.Amount
+		deductionMap[d.DeductionType] += d.Amount
+	}
+
+	pdf.Ln(5)
+	pdf.SetFont("Arial", "B", 11)
+	pdf.Cell(0, 8, "SUMMARY")
+	pdf.Ln(-1)
+	pdf.SetFont("Arial", "", 10)
+	pdf.Cell(0, 8, fmt.Sprintf("Total Deductions: %d", len(deductions)))
+	pdf.Ln(-1)
+	pdf.Cell(0, 8, fmt.Sprintf("Total Amount: Rs. %.2f", totalAmount))
+	pdf.Ln(-1)
+
+	pdf.SetFont("Arial", "B", 9)
+	pdf.Cell(0, 8, "Breakdown by Type:")
+	pdf.Ln(-1)
+	pdf.SetFont("Arial", "", 9)
+
+	for deductionType, amount := range deductionMap {
+		pdf.Cell(0, 6, fmt.Sprintf("  • %s: Rs. %.2f", deductionType, amount))
+		pdf.Ln(-1)
+	}
+
+	pdf.Ln(10)
+	pdf.SetFont("Arial", "B", 9)
+	pdf.Cell(20, 7, "ID")
+	pdf.Cell(25, 7, "Student ID")
+	pdf.Cell(35, 7, "Deduction Type")
+	pdf.Cell(25, 7, "Amount")
+	pdf.Cell(20, 7, "Date")
+	pdf.Ln(-1)
+
+	pdf.SetFont("Arial", "", 8)
+	for _, deduction := range deductions {
+		pdf.Cell(20, 6, deduction.ID.String()[:8])
+		pdf.Cell(25, 6, deduction.StudentID.String()[:8])
+		pdf.Cell(35, 6, deduction.DeductionType)
+		pdf.Cell(25, 6, fmt.Sprintf("%.2f", deduction.Amount))
+		pdf.Cell(20, 6, deduction.CreatedAt.Format("06-01-02"))
+		pdf.Ln(-1)
+	}
+
+	pdf.Output(w)
+	return nil
+}
+
+// ExportTransactionsToPdf exports transactions to PDF format
+func (rs *ReportService) ExportTransactionsToPdf(w io.Writer, startDate, endDate *time.Time) error {
+	var transactions []models.Transaction
+
+	query := rs.db
+	if startDate != nil && endDate != nil {
+		query = query.Where("created_at BETWEEN ? AND ?", startDate, endDate)
+	}
+
+	if err := query.Find(&transactions).Error; err != nil {
+		return fmt.Errorf("failed to fetch transactions: %w", err)
+	}
+
+	pdf := fpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+	pdf.SetFont("Arial", "B", 16)
+	pdf.Cell(0, 10, "TRANSACTIONS REPORT")
+	pdf.Ln(-1)
+
+	pdf.SetFont("Arial", "", 10)
+	pdf.Cell(0, 10, fmt.Sprintf("Generated: %s", time.Now().Format("2006-01-02 15:04:05")))
+	pdf.Ln(-1)
+
+	if startDate != nil && endDate != nil {
+		pdf.Cell(0, 10, fmt.Sprintf("Period: %s to %s", startDate.Format("2006-01-02"), endDate.Format("2006-01-02")))
+		pdf.Ln(-1)
+	}
+
+	var totalAmount float64
+	successCount, pendingCount, failedCount := 0, 0, 0
+
+	for _, t := range transactions {
+		totalAmount += t.Amount
+		switch t.Status {
+		case "SUCCESS":
+			successCount++
+		case "PENDING":
+			pendingCount++
+		case "FAILED":
+			failedCount++
+		}
+	}
+
+	pdf.Ln(5)
+	pdf.SetFont("Arial", "B", 11)
+	pdf.Cell(0, 8, "SUMMARY")
+	pdf.Ln(-1)
+	pdf.SetFont("Arial", "", 10)
+	pdf.Cell(0, 8, fmt.Sprintf("Total Transactions: %d", len(transactions)))
+	pdf.Ln(-1)
+	pdf.Cell(0, 8, fmt.Sprintf("Successful: %d | Pending: %d | Failed: %d", successCount, pendingCount, failedCount))
+	pdf.Ln(-1)
+	pdf.Cell(0, 8, fmt.Sprintf("Total Amount: Rs. %.2f", totalAmount))
+	pdf.Ln(-1)
+
+	pdf.Ln(10)
+	pdf.SetFont("Arial", "B", 8)
+	pdf.Cell(15, 7, "ID")
+	pdf.Cell(15, 7, "Student")
+	pdf.Cell(15, 7, "Amount")
+	pdf.Cell(12, 7, "Status")
+	pdf.Cell(15, 7, "Type")
+	pdf.Cell(25, 7, "Account")
+	pdf.Cell(15, 7, "Date")
+	pdf.Ln(-1)
+
+	pdf.SetFont("Arial", "", 7)
+	for _, txn := range transactions {
+		pdf.Cell(15, 6, txn.ID.String()[:8])
+		pdf.Cell(15, 6, txn.StudentID.String()[:8])
+		pdf.Cell(15, 6, fmt.Sprintf("%.0f", txn.Amount))
+		pdf.Cell(12, 6, txn.Status)
+		pdf.Cell(15, 6, txn.TransactionType)
+		acctDisplay := txn.DestinationAccount
+		if len(acctDisplay) > 12 {
+			acctDisplay = acctDisplay[:12]
+		}
+		pdf.Cell(25, 6, acctDisplay)
+		pdf.Cell(15, 6, txn.CreatedAt.Format("06-01-02"))
+		pdf.Ln(-1)
+	}
+
+	pdf.Output(w)
 	return nil
 }

@@ -93,7 +93,7 @@ func Migrate() error {
 		&models.Deduction{},
 		&models.DeductionRule{},
 		&models.Transaction{},
-		// &models.AuditLog{}, // TODO: Enable audit logs after testing search and reports
+		&models.AuditLog{},
 	); err != nil {
 		log.Printf("Error running migrations: %v", err)
 		return err
