@@ -1,0 +1,6 @@
+last_name,rub_id_card_number,email,phone_number,date_of_birth,program_id,college_id
+ghalley,11805001,ghalley.wangpo@rub.edu.bt,17123456,2000-05-15,2,1
+karma,11805002,karma.dem@rub.edu.bt,17234567,1999-08-20,3,1
+Dups,11805003,dups.lhamo@rub.edu.bt,17345678,2001-03-10,2,2
+smaphel,11805004,smaphe.tenzin@rub.edu.bt,17456789,2000-11-25,1,3
+just sunshine,11805005,sunshine.choden@rub.edu.bt,17567890,1999-12-05,4,2

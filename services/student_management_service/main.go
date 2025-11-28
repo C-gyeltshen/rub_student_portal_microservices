@@ -64,26 +64,11 @@ func startHTTPServer() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	
-	// CORS middleware for frontend integration
-	r.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			
-			if r.Method == "OPTIONS" {
-				w.WriteHeader(http.StatusOK)
-				return
-			}
-			
-			next.ServeHTTP(w, r)
-		})
-	})
 
 	// ==================== Student Endpoints ====================
 	r.Get("/api/students", handlers.GetStudents)
 	r.Post("/api/students", handlers.CreateStudent)
+	r.Post("/api/students/bulk", handlers.BulkCreateStudents)
 	r.Get("/api/students/search", handlers.SearchStudents)
 	r.Get("/api/students/{id}", handlers.GetStudentById)
 	r.Get("/api/students/rub-id/{rubId}", handlers.GetStudentByRubId)
