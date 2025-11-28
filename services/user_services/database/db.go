@@ -21,8 +21,7 @@ func Connect() error {
 	// 1. Read the Database URL from the environment variable
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
-		log.Fatal("FATAL: DATABASE_URL environment variable is not set.")
-		// os.Getenv returns an empty string if the variable is not found
+		return gorm.ErrInvalidDB
 	}
 
 	// 2. Add SSL mode if not present (required for Render and other cloud providers)
