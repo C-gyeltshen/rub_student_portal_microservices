@@ -59,12 +59,13 @@ func UpdateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&role); err != nil {
+	var updates models.UserRole
+	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := database.DB.Save(&role).Error; err != nil {
+	if err := database.DB.Model(&role).Updates(updates).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

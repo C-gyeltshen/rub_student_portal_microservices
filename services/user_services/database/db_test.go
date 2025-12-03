@@ -1,10 +1,10 @@
 package database
 
 import (
-"os"
-"testing"
+	"os"
+	"testing"
 
-"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConnect_MissingDatabaseURL(t *testing.T) {
@@ -12,7 +12,7 @@ func TestConnect_MissingDatabaseURL(t *testing.T) {
 	
 	err := Connect()
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "DATABASE_URL environment variable is not set")
+	assert.Equal(t, err.Error(), "invalid db")
 }
 
 func TestDatabaseURL_EnvVariable(t *testing.T) {

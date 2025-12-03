@@ -77,15 +77,18 @@ func TestCreateUsers_Success(t *testing.T) {
 		UserRoleID:  1,
 	}
 
-	roleRows := sqlmock.NewRows([]string{"id", "role_name"}).AddRow(1, "Student")
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "user_roles"`)).
-		WithArgs(uint(1)).
-		WillReturnRows(roleRows)
-
 	mock.ExpectBegin()
 	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "user_data"`)).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 	mock.ExpectCommit()
+
+	roleRows := sqlmock.NewRows([]string{"id", "role_name"}).AddRow(1, "Student")
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "user_data"`)).
+		WithArgs(uint(1), 1).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "first_name", "second_name", "email", "user_role_id"}).AddRow(1, "Test", "User", "test@example.com", 1))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "user_roles"`)).
+		WithArgs(uint(1)).
+		WillReturnRows(roleRows)
 
 	body, _ := json.Marshal(user)
 	req := httptest.NewRequest("POST", "/users", bytes.NewBuffer(body))
@@ -178,7 +181,7 @@ func TestGetUsersByRoleId_Success(t *testing.T) {
 		WillReturnRows(roleRows)
 
 	router := chi.NewRouter()
-	router.Get("/users/roles/{id}", GetUsersByRoleId)
+	router.Get("/users/roles/{roleId}", GetUsersByRoleId)
 
 	req := httptest.NewRequest("GET", "/users/roles/1", nil)
 	w := httptest.NewRecorder()
@@ -202,15 +205,18 @@ func TestCreateFinanceOfficer_Success(t *testing.T) {
 		Email:       "finance@example.com",
 	}
 
-	roleRows := sqlmock.NewRows([]string{"id", "role_name"}).AddRow(2, "Finance Officer")
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "user_roles" WHERE role_name = $1`)).
-		WithArgs("Finance Officer").
-		WillReturnRows(roleRows)
-
 	mock.ExpectBegin()
 	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "user_data"`)).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 	mock.ExpectCommit()
+
+	roleRows := sqlmock.NewRows([]string{"id", "role_name"}).AddRow(2, "Finance Officer")
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "user_data"`)).
+		WithArgs(uint(1), 1).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "first_name", "second_name", "email", "user_role_id"}).AddRow(1, "Finance", "Officer", "finance@example.com", 2))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "user_roles"`)).
+		WithArgs(uint(2)).
+		WillReturnRows(roleRows)
 
 	body, _ := json.Marshal(user)
 	req := httptest.NewRequest("POST", "/users/finance-officer", bytes.NewBuffer(body))
