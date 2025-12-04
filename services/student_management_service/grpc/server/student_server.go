@@ -238,10 +238,6 @@ func (s *StudentServer) CheckStipendEligibility(ctx context.Context, req *pb.Sti
 
 // Helper function to convert models.Student to pb.StudentResponse
 func convertStudentToProto(student *models.Student) *pb.StudentResponse {
-	// Split name into first and last name for backward compatibility
-	firstName := student.Name
-	lastName := ""
-	
 	return &pb.StudentResponse{
 		Id:               uint32(student.ID),
 		FirstName:        student.FirstName,

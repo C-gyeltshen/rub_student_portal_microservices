@@ -1,8 +1,8 @@
 package main
 
 import (
-	gwMiddleware "api-gateway/internal/middleware"
 	"api-gateway/internal/router"
+	"fmt"
 	"log"
 	"net/http"
 

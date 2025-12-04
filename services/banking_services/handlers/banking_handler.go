@@ -197,7 +197,7 @@ func UpdateStudentBankDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verify that the bank exists if BankID is being updated
-	if updatedDetails.BankID != "" && updatedDetails.BankID != studentBankDetails.BankID {
+	if updatedDetails.BankID != uuid.Nil && updatedDetails.BankID != studentBankDetails.BankID {
 		var bank models.Bank
 		if err := database.DB.Where("id = ?", updatedDetails.BankID).First(&bank).Error; err != nil {
 			http.Error(w, "Bank not found", http.StatusBadRequest)
