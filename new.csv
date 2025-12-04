@@ -1,0 +1,6 @@
+student_id,first_name,last_name,email,phone_number,cid,date_of_birth,gender,permanent_address,current_address,program_id,college_id,year_of_study,semester,enrollment_date,graduation_date,gpa,status,academic_standing,guardian_name,guardian_phone_number,guardian_relation
+STU2024015,Tenzin,Lhamo,tenzin.lhamo@student.rub.edu.bt,+97517111222,11234567904,2001-01-10,Female,"Thimphu, Bhutan",Ladies Hostel Block B,1,1,2,4,2023-01-15,,3.65,active,good,Lhamo Zangmo,+97517888111,Mother
+STU2024016,Jigme,Dorji,jigme.dorji@student.rub.edu.bt,+97517222333,11234567905,2000-03-15,Male,"Phuentsholing, Bhutan",CST Hostel Block D,1,1,3,5,2022-01-15,,3.45,active,good,Dorji Tshering,+97517888222,Father
+STU2024017,Dawa,Tshering,dawa.tshering@student.rub.edu.bt,+97517333444,11234567906,2001-09-20,Male,"Samtse, Bhutan",Off-campus,1,1,1,2,2024-01-15,,2.88,active,good,Tshering Wangmo,+97517888333,Mother
+STU2024018,Chimi,Zangmo,chimi.zangmo@student.rub.edu.bt,+97517444555,11234567907,2000-06-25,Female,"Mongar, Bhutan",Ladies Hostel Block C,1,1,4,7,2021-01-15,,3.95,active,good,Zangmo Dema,+97517888444,Mother
+STU2024019,Passang,Wangchuk,passang.wangchuk@student.rub.edu.bt,+97517555666,11234567908,2001-12-05,Male,"Trashigang, Bhutan",CST Hostel Block A,1,1,2,3,2023-01-15,,3.12,active,good,Wangchuk Dorji,+97517888555,Father

@@ -3,6 +3,8 @@ CREATE TYPE payment_methods_enum AS ENUM ('Bank_transfer', 'E-payment');
 CREATE TYPE master_status_enum AS ENUM ('Enabled', 'Disabled');
 CREATE TYPE question_type_enum AS ENUM('Radio', 'Checkbox');
 
+--user
+
 CREATE TABLE roles(
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
@@ -18,7 +20,7 @@ CREATE TABLE users(
     modified_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-
+--
 
 CREATE TBALE stipends(
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

@@ -28,3 +28,13 @@ func ForwardToBankingService(w http.ResponseWriter, r *http.Request) {
     
     proxy.ServeHTTP(w, r)
 }
+
+func ForwardToStudentService(w http.ResponseWriter, r *http.Request) {
+    target, _ := url.Parse("http://student_management_service:8084") // Student Management Service
+    proxy := httputil.NewSingleHostReverseProxy(target)
+    
+    // Student service expects /api prefix, so don't strip it
+    r.Header.Set("X-Forwarded-Host", r.Host)
+    
+    proxy.ServeHTTP(w, r)
+}
