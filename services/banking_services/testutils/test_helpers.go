@@ -4,27 +4,28 @@ import (
 	"banking_services/models"
 	"bytes"
 	"encoding/json"
-	"github.com/go-chi/chi/v5"
-	"gorm.io/gorm"
 	"io"
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 )
 
 // CreateTestBank returns a test bank object
 func CreateTestBank() *models.Bank {
 	return &models.Bank{
-		Model: gorm.Model{ID: 1},
-		Name:  "Test Bank",
+		ID:   uuid.New(),
+		Name: "Test Bank",
 	}
 }
 
 // CreateTestStudentBankDetails returns test student bank details
 func CreateTestStudentBankDetails() *models.StudentBankDetails {
 	return &models.StudentBankDetails{
-		Model:             gorm.Model{ID: 1},
-		StudentID:         123,
-		BankID:            1,
+		ID:                uuid.New(),
+		StudentID:         uuid.New(),
+		BankID:            uuid.New(),
 		AccountNumber:     "1234567890",
 		AccountHolderName: "John Doe",
 	}

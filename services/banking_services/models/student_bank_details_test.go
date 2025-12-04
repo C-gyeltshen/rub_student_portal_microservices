@@ -2,16 +2,21 @@ package models
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
-	"gorm.io/gorm"
 	"testing"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestStudentBankDetails_JSONMarshaling(t *testing.T) {
+	id := uuid.New()
+	studentID := uuid.New()
+	bankID := uuid.New()
+
 	details := StudentBankDetails{
-		Model:             gorm.Model{ID: 1},
-		StudentID:         123,
-		BankID:            1,
+		ID:                id,
+		StudentID:         studentID,
+		BankID:            bankID,
 		AccountNumber:     "1234567890",
 		AccountHolderName: "John Doe",
 	}
@@ -25,50 +30,57 @@ func TestStudentBankDetails_JSONMarshaling(t *testing.T) {
 	err = json.Unmarshal(jsonData, &unmarshaled)
 	assert.NoError(t, err)
 	assert.Equal(t, "John Doe", unmarshaled.AccountHolderName)
-	assert.Equal(t, 123, unmarshaled.StudentID)
+	assert.Equal(t, studentID, unmarshaled.StudentID)
 }
 
 func TestStudentBankDetails_JSONUnmarshaling(t *testing.T) {
-	jsonStr := `{"student_id":123,"bank_id":1,"account_number":"1234567890","account_holder_name":"John Doe"}`
+	studentID := uuid.New()
+	bankID := uuid.New()
+	jsonStr := `{"student_id":"` + studentID.String() + `","bank_id":"` + bankID.String() + `","account_number":"1234567890","account_holder_name":"John Doe"}`
 
 	var details StudentBankDetails
 	err := json.Unmarshal([]byte(jsonStr), &details)
 	assert.NoError(t, err)
-	assert.Equal(t, 123, details.StudentID)
-	assert.Equal(t, uint(1), details.BankID)
+	assert.Equal(t, studentID, details.StudentID)
+	assert.Equal(t, bankID, details.BankID)
 	assert.Equal(t, "1234567890", details.AccountNumber)
 	assert.Equal(t, "John Doe", details.AccountHolderName)
 }
 
 func TestStudentBankDetails_ForeignKey(t *testing.T) {
+	bankID := uuid.New()
 	details := StudentBankDetails{
-		BankID: 1,
+		BankID: bankID,
 		Bank: Bank{
-			Model: gorm.Model{ID: 1},
-			Name:  "Test Bank",
+			ID:   bankID,
+			Name: "Test Bank",
 		},
 	}
 
-	assert.Equal(t, uint(1), details.BankID)
+	assert.Equal(t, bankID, details.BankID)
 	assert.Equal(t, "Test Bank", details.Bank.Name)
 }
 
 func TestStudentBankDetails_AllFields(t *testing.T) {
+	id := uuid.New()
+	studentID := uuid.New()
+	bankID := uuid.New()
+
 	details := StudentBankDetails{
-		Model:             gorm.Model{ID: 1},
-		StudentID:         123,
-		BankID:            1,
+		ID:                id,
+		StudentID:         studentID,
+		BankID:            bankID,
 		AccountNumber:     "1234567890",
 		AccountHolderName: "John Doe",
 		Bank: Bank{
-			Model: gorm.Model{ID: 1},
-			Name:  "Test Bank",
+			ID:   bankID,
+			Name: "Test Bank",
 		},
 	}
 
-	assert.Equal(t, uint(1), details.ID)
-	assert.Equal(t, 123, details.StudentID)
-	assert.Equal(t, uint(1), details.BankID)
+	assert.Equal(t, id, details.ID)
+	assert.Equal(t, studentID, details.StudentID)
+	assert.Equal(t, bankID, details.BankID)
 	assert.Equal(t, "1234567890", details.AccountNumber)
 	assert.Equal(t, "John Doe", details.AccountHolderName)
 	assert.Equal(t, "Test Bank", details.Bank.Name)

@@ -12,6 +12,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )
@@ -245,29 +246,33 @@ func TestCreateStudentBankDetails_Success(t *testing.T) {
 		sqlDB.Close()
 	}()
 
+	studentID := uuid.New()
+	bankID := uuid.New()
+
 	details := models.StudentBankDetails{
-		StudentID:         123,
-		BankID:            1,
+		StudentID:         studentID,
+		BankID:            bankID,
 		AccountNumber:     "1234567890",
 		AccountHolderName: "John Doe",
 	}
 
-	bankRows := sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "Test Bank")
+	bankRows := sqlmock.NewRows([]string{"id", "name"}).AddRow(bankID, "Test Bank")
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "banks"`)).
-		WithArgs(uint(1), 1).
+		WithArgs(bankID, 1).
 		WillReturnRows(bankRows)
 
 	mock.ExpectBegin()
+	detailsID := uuid.New()
 	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "student_bank_details"`)).
-		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(detailsID))
 	mock.ExpectCommit()
 
 	detailsRows := sqlmock.NewRows([]string{"id", "student_id", "bank_id", "account_number", "account_holder_name"}).
-		AddRow(1, 123, 1, "1234567890", "John Doe")
+		AddRow(detailsID, studentID, bankID, "1234567890", "John Doe")
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "student_bank_details"`)).
 		WillReturnRows(detailsRows)
 
-	bankRows2 := sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "Test Bank")
+	bankRows2 := sqlmock.NewRows([]string{"id", "name"}).AddRow(bankID, "Test Bank")
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "banks"`)).
 		WillReturnRows(bankRows2)
 
@@ -289,15 +294,18 @@ func TestCreateStudentBankDetails_BankNotFound(t *testing.T) {
 		sqlDB.Close()
 	}()
 
+	studentID := uuid.New()
+	bankID := uuid.New()
+
 	details := models.StudentBankDetails{
-		StudentID:         123,
-		BankID:            999,
+		StudentID:         studentID,
+		BankID:            bankID,
 		AccountNumber:     "1234567890",
 		AccountHolderName: "John Doe",
 	}
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "banks"`)).
-		WithArgs(uint(999), 1).
+		WithArgs(bankID, 1).
 		WillReturnError(gorm.ErrRecordNotFound)
 
 	body, _ := json.Marshal(details)

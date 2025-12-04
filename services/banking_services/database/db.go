@@ -2,12 +2,13 @@ package database
 
 import (
 	"banking_services/models"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"log"
 	"os"
 	"time"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var DB *gorm.DB
@@ -62,6 +63,17 @@ func Connect() error {
 	sqlDB.SetMaxOpenConns(100)          // Maximum number of open connections
 	sqlDB.SetConnMaxLifetime(time.Hour) // Maximum lifetime of a connection
 
+	// 4.5. Enable UUID extension if not already enabled
+	err = DB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"").Error
+	if err != nil {
+		log.Printf("Warning: Could not enable uuid-ossp extension: %v", err)
+		// Try pgcrypto as an alternative
+		err = DB.Exec("CREATE EXTENSION IF NOT EXISTS \"pgcrypto\"").Error
+		if err != nil {
+			log.Printf("Warning: Could not enable pgcrypto extension: %v", err)
+		}
+	}
+
 	// 5. AutoMigrate the models
 	// GORM will create or update the tables based on your structs
 	err = DB.AutoMigrate(&models.Bank{}, &models.StudentBankDetails{})
@@ -70,6 +82,6 @@ func Connect() error {
 		return err
 	}
 
-	log.Println("Database connected and User/Role models migrated successfully.")
+	log.Println("Database connected and Bank/StudentBankDetails models migrated successfully.")
 	return nil
 }
