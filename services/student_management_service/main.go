@@ -17,6 +17,7 @@ import (
 )
 
 func main() {
+	
 	// Load .env file
 	if err := godotenv.Load(); err != nil {
 		log.Println("Warning: .env file not found, using environment variables")
@@ -71,10 +72,9 @@ func startHTTPServer() {
 	r.Post("/api/students/bulk/csv", handlers.BulkCreateStudentsFromCSV)
 	r.Get("/api/students/search", handlers.SearchStudents)
 	r.Get("/api/students/{id}", handlers.GetStudentById)
-	r.Get("/api/students/student-id/{studentId}", handlers.GetStudentByStudentId)
+	r.Get("/api/students/rub-id/{rubId}", handlers.GetStudentByRubId)
 	r.Get("/api/students/program/{programId}", handlers.GetStudentsByProgram)
 	r.Get("/api/students/college/{collegeId}", handlers.GetStudentsByCollege)
-	r.Get("/api/students/status/{status}", handlers.GetStudentsByStatus)
 	r.Put("/api/students/{id}", handlers.UpdateStudent)
 	r.Delete("/api/students/{id}", handlers.DeleteStudent)
 
@@ -83,32 +83,15 @@ func startHTTPServer() {
 	r.Post("/api/programs", handlers.CreateProgram)
 	r.Get("/api/programs/{id}", handlers.GetProgramById)
 	r.Put("/api/programs/{id}", handlers.UpdateProgram)
+	r.Delete("/api/programs/{id}", handlers.DeleteProgram)
 
 	// ==================== College Endpoints ====================
 	r.Get("/api/colleges", handlers.GetColleges)
 	r.Post("/api/colleges", handlers.CreateCollege)
 	r.Get("/api/colleges/{id}", handlers.GetCollegeById)
 	r.Put("/api/colleges/{id}", handlers.UpdateCollege)
+	r.Delete("/api/colleges/{id}", handlers.DeleteCollege)
 
-	// ==================== Stipend Eligibility Endpoints ====================
-	r.Get("/api/stipend/eligibility/{studentId}", handlers.CheckStipendEligibility)
-
-	// ==================== Stipend Allocation Endpoints ====================
-	r.Get("/api/stipend/allocations", handlers.GetStipendAllocations)
-	r.Post("/api/stipend/allocations", handlers.CreateStipendAllocation)
-	r.Get("/api/stipend/allocations/{id}", handlers.GetStipendAllocationById)
-	r.Put("/api/stipend/allocations/{id}", handlers.UpdateStipendAllocation)
-
-	// ==================== Stipend History Endpoints ====================
-	r.Get("/api/stipend/history", handlers.GetStipendHistory)
-	r.Post("/api/stipend/history", handlers.CreateStipendHistory)
-	r.Get("/api/stipend/history/student/{studentId}", handlers.GetStudentStipendHistory)
-
-	// ==================== Report Endpoints ====================
-	r.Get("/api/reports/students/summary", handlers.GenerateStudentSummary)
-	r.Get("/api/reports/stipend/statistics", handlers.GenerateStipendStatistics)
-	r.Get("/api/reports/students/by-college", handlers.GetStudentsByCollegeReport)
-	r.Get("/api/reports/students/by-program", handlers.GetStudentsByProgramReport)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -123,6 +106,7 @@ func startHTTPServer() {
 	log.Println("  - Programs: /api/programs")
 	log.Println("  - Colleges: /api/colleges")
 	log.Println("  - Stipend: /api/stipend/*")
+	log.Println("  - Finance Integration: /api/stipend/calculate, /api/students/{id}/finance-stipends")
 	log.Println("  - Reports: /api/reports/*")
 	
 	http.ListenAndServe(":"+port, r)

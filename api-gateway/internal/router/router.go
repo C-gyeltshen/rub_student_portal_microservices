@@ -2,6 +2,8 @@ package router
 
 import (
 	"api-gateway/internal/proxy"
+	"log"
+	"net/http"
 
 	"github.com/go-chi/chi/v5"
 )

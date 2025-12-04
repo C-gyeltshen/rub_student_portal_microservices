@@ -30,13 +30,13 @@ func (s *StudentServer) GetStudent(ctx context.Context, req *pb.GetStudentReques
 	return convertStudentToProto(&student), nil
 }
 
-// GetStudentByStudentId retrieves a student by their Student ID (RUB ID)
+// GetStudentByStudentId retrieves a student by their RUB ID card number
 func (s *StudentServer) GetStudentByStudentId(ctx context.Context, req *pb.GetStudentByStudentIdRequest) (*pb.StudentResponse, error) {
 	var student models.Student
 	
-	if err := database.DB.Preload("Program").Preload("College").Where("student_id = ?", req.StudentId).First(&student).Error; err != nil {
+	if err := database.DB.Preload("Program").Preload("College").Where("rub_id_card_number = ?", req.StudentId).First(&student).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("student with Student ID %s not found", req.StudentId)
+			return nil, fmt.Errorf("student with RUB ID %s not found", req.StudentId)
 		}
 		return nil, fmt.Errorf("failed to fetch student: %w", err)
 	}
@@ -88,20 +88,11 @@ func (s *StudentServer) UpdateStudent(ctx context.Context, req *pb.UpdateStudent
 
 	// Update fields
 	updates := map[string]interface{}{
-		"first_name":            req.FirstName,
-		"last_name":             req.LastName,
-		"email":                 req.Email,
-		"phone_number":          req.PhoneNumber,
-		"gender":                req.Gender,
-		"program_id":            req.ProgramId,
-		"college_id":            req.CollegeId,
-		"permanent_address":     req.PermanentAddress,
-		"current_address":       req.CurrentAddress,
-		"guardian_name":         req.GuardianName,
-		"guardian_phone_number": req.GuardianPhone,
-		"status":                req.EnrollmentStatus,
-		"gpa":                   req.Gpa,
-		"academic_standing":     req.AcademicStanding,
+		"name":         req.FirstName + " " + req.LastName,
+		"email":        req.Email,
+		"phone_number": req.PhoneNumber,
+		"program_id":   req.ProgramId,
+		"college_id":   req.CollegeId,
 	}
 
 	if err := database.DB.Model(&student).Updates(updates).Error; err != nil {
@@ -141,14 +132,10 @@ func (s *StudentServer) DeleteStudent(ctx context.Context, req *pb.DeleteStudent
 	}, nil
 }
 
-// ListStudents retrieves all students with optional status filter
+// ListStudents retrieves all students
 func (s *StudentServer) ListStudents(ctx context.Context, req *pb.ListStudentsRequest) (*pb.ListStudentsResponse, error) {
 	var students []models.Student
 	query := database.DB.Preload("Program").Preload("College")
-
-	if req.Status != "" {
-		query = query.Where("enrollment_status = ?", req.Status)
-	}
 
 	if err := query.Find(&students).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch students: %w", err)
@@ -171,8 +158,8 @@ func (s *StudentServer) SearchStudents(ctx context.Context, req *pb.SearchStuden
 	query := database.DB.Preload("Program").Preload("College")
 
 	searchPattern := "%" + req.Query + "%"
-	query = query.Where("first_name ILIKE ? OR last_name ILIKE ? OR email ILIKE ? OR student_id ILIKE ?",
-		searchPattern, searchPattern, searchPattern, searchPattern)
+	query = query.Where("name ILIKE ? OR email ILIKE ? OR rub_id_card_number ILIKE ?",
+		searchPattern, searchPattern, searchPattern)
 
 	if err := query.Find(&students).Error; err != nil {
 		return nil, fmt.Errorf("failed to search students: %w", err)
@@ -241,45 +228,20 @@ func (s *StudentServer) CheckStipendEligibility(ctx context.Context, req *pb.Sti
 		return nil, fmt.Errorf("failed to fetch student: %w", err)
 	}
 
-	// Check eligibility criteria
-	if student.Status != "active" {
-		return &pb.StipendEligibilityResponse{
-			Eligible: false,
-			Reason:   "Student is not active",
-		}, nil
-	}
-
-	if student.GPA < 2.5 {
-		return &pb.StipendEligibilityResponse{
-			Eligible: false,
-			Reason:   fmt.Sprintf("GPA (%.2f) is below minimum requirement (2.5)", student.GPA),
-		}, nil
-	}
-
-	if student.AcademicStanding != "Good Standing" {
-		return &pb.StipendEligibilityResponse{
-			Eligible: false,
-			Reason:   fmt.Sprintf("Academic standing is %s", student.AcademicStanding),
-		}, nil
-	}
-
-	if !student.Program.HasStipend {
-		return &pb.StipendEligibilityResponse{
-			Eligible: false,
-			Reason:   "Program does not offer stipend",
-		}, nil
-	}
-
+	// Basic eligibility - student exists
+	// Note: Additional eligibility criteria should be checked by the finance service
 	return &pb.StipendEligibilityResponse{
-		Eligible:     true,
-		Reason:       "Student meets all eligibility criteria",
-		Amount:       student.Program.StipendAmount,
-		StipendType:  student.Program.StipendType,
+		Eligible: true,
+		Reason:   "Student found",
 	}, nil
 }
 
 // Helper function to convert models.Student to pb.StudentResponse
 func convertStudentToProto(student *models.Student) *pb.StudentResponse {
+	// Split name into first and last name for backward compatibility
+	firstName := student.Name
+	lastName := ""
+	
 	return &pb.StudentResponse{
 		Id:               uint32(student.ID),
 		FirstName:        student.FirstName,

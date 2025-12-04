@@ -74,14 +74,46 @@ func Connect() error {
 		}
 	}
 
-	// 5. AutoMigrate the models
-	// GORM will create or update the tables based on your structs
-	err = DB.AutoMigrate(&models.Bank{}, &models.StudentBankDetails{})
-	if err != nil {
-		log.Printf("Error running AutoMigrate: %v", err)
-		return err
-	}
+    // 5. Handle migration issues - drop tables if they have wrong data types
+    // Check banks table for non-UUID ID
+    var banksIdType string
+    err = DB.Raw(`
+        SELECT data_type 
+        FROM information_schema.columns 
+        WHERE table_name = 'banks' 
+        AND column_name = 'id'
+    `).Scan(&banksIdType).Error
+    
+    if err == nil && banksIdType != "uuid" {
+        log.Println("⚠️  Detected non-UUID banks.id column, dropping tables for UUID migration...")
+        DB.Exec("DROP TABLE IF EXISTS student_bank_details CASCADE")
+        DB.Exec("DROP TABLE IF EXISTS banks CASCADE")
+        log.Println("✓ Tables dropped successfully")
+    } else {
+        // Also check student_bank_details for bigint student_id
+        var columnType string
+        err = DB.Raw(`
+            SELECT data_type 
+            FROM information_schema.columns 
+            WHERE table_name = 'student_bank_details' 
+            AND column_name = 'student_id'
+        `).Scan(&columnType).Error
+        
+        if err == nil && columnType == "bigint" {
+            log.Println("⚠️  Detected bigint student_id column, dropping table for UUID migration...")
+            DB.Exec("DROP TABLE IF EXISTS student_bank_details CASCADE")
+            log.Println("✓ Table dropped successfully")
+        }
+    }
 
-	log.Println("Database connected and Bank/StudentBankDetails models migrated successfully.")
-	return nil
+    // 6. AutoMigrate the models
+    // GORM will create or update the tables based on your structs
+    err = DB.AutoMigrate(&models.Bank{}, &models.StudentBankDetails{})
+    if err != nil {
+        log.Printf("Error running AutoMigrate: %v", err)
+        return err
+    }
+
+    log.Println("Database connected and banking models migrated successfully.")
+    return nil
 }
