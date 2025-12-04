@@ -1,16 +1,18 @@
 package models
 
 import (
-"encoding/json"
-"testing"
-"github.com/stretchr/testify/assert"
-"gorm.io/gorm"
+	"encoding/json"
+	"testing"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBank_JSONMarshaling(t *testing.T) {
+	id := uuid.New()
 	bank := Bank{
-		Model: gorm.Model{ID: 1},
-		Name:  "Test Bank",
+		ID:   id,
+		Name: "Test Bank",
 	}
 
 	jsonData, err := json.Marshal(bank)
@@ -24,8 +26,9 @@ func TestBank_JSONMarshaling(t *testing.T) {
 }
 
 func TestBank_Relationships(t *testing.T) {
+	id := uuid.New()
 	bank := Bank{
-		Model:              gorm.Model{ID: 1},
+		ID:                 id,
 		Name:               "Test Bank",
 		StudentBankDetails: []StudentBankDetails{},
 	}

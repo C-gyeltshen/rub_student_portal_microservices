@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 )
 
 // ==================== Bank Handlers ====================
@@ -196,7 +197,7 @@ func UpdateStudentBankDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verify that the bank exists if BankID is being updated
-	if updatedDetails.BankID != 0 && updatedDetails.BankID != studentBankDetails.BankID {
+	if updatedDetails.BankID != uuid.Nil && updatedDetails.BankID != studentBankDetails.BankID {
 		var bank models.Bank
 		if err := database.DB.First(&bank, updatedDetails.BankID).Error; err != nil {
 			http.Error(w, "Bank not found", http.StatusBadRequest)
@@ -205,10 +206,10 @@ func UpdateStudentBankDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update fields
-	if updatedDetails.StudentID != 0 {
+	if updatedDetails.StudentID != uuid.Nil {
 		studentBankDetails.StudentID = updatedDetails.StudentID
 	}
-	if updatedDetails.BankID != 0 {
+	if updatedDetails.BankID != uuid.Nil {
 		studentBankDetails.BankID = updatedDetails.BankID
 	}
 	if updatedDetails.AccountNumber != "" {
